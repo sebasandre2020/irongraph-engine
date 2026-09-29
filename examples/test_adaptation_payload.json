@@ -1,0 +1,15 @@
+{
+  "drawbacks": {
+    "sleep_hours": 4.5,
+    "available_minutes": 30,
+    "occupied_equipment": ["squat_rack"],
+    "localized_pain_symptoms": ["lower_back_tightness"],
+    "subjective_readiness_1_to_10": 4
+  },
+  "hypertrophy_preferences": {
+    "enable_antagonist_paired_sets": true,
+    "enable_rest_pause_myo_reps": true,
+    "target_rir_buffer": 1.5,
+    "preserve_effective_volume": true
+  }
+}

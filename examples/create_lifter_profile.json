@@ -1,0 +1,29 @@
+{
+  "name": "Alex Turner",
+  "experience_tier": "advanced",
+  "volume_landmarks_mev_mrv": {
+    "quads": { "mev": 8, "mav": 14, "mrv": 18 },
+    "hamstrings": { "mev": 6, "mav": 10, "mrv": 14 },
+    "chest": { "mev": 8, "mav": 14, "mrv": 20 },
+    "back": { "mev": 10, "mav": 16, "mrv": 22 },
+    "shoulders": { "mev": 8, "mav": 16, "mrv": 22 }
+  },
+  "baseline_1rms": {
+    "barbell_back_squat": 160.0,
+    "incline_dumbbell_press": 42.5,
+    "barbell_bent_over_row": 110.0,
+    "romanian_deadlift": 150.0
+  },
+  "active_contraindications": [
+    "acute_lumbar_strain"
+  ],
+  "equipment_access": [
+    "dumbbells",
+    "barbell",
+    "hack_squat_machine",
+    "leg_press_machine",
+    "tbar_machine",
+    "cable",
+    "leg_curl_machine"
+  ]
+}

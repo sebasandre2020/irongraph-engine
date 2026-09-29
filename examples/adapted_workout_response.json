@@ -1,0 +1,60 @@
+{
+  "adaptation_id": "adapt_01HXZ7K8M9NPQR0123456789AB",
+  "lifter_id": "f1e2d3c4-b5a6-7890-1234-567890abcdef",
+  "status": "COMMITTED",
+  "coaching_rationale": "High-fatigue adaptation applied: eliminated spinal compressive load due to lumbar tightness and 4.5h sleep. Substituted Barbell Squat for Machine Hack Squat (SFR +40% for quads) and Barbell Row for Chest-Supported T-Bar Row. Restructured into Antagonist Paired Sets (APS) and Myo-reps to compress session time to 28 minutes while securing 9 high-tension effective hypertrophy sets.",
+  "drawbacks_summary": {
+    "sleep_deficit_level": "severe",
+    "axial_stress_reduction_pct": 72,
+    "time_compression_pct": 58
+  },
+  "adapted_workout": {
+    "title": "Adapted Hypertrophy: High-SFR Quad & Pull Blast (30-min Express)",
+    "estimated_duration_min": 28,
+    "total_effective_sets": 9,
+    "sfr_rating": "VERY_HIGH",
+    "exercises": [
+      {
+        "exercise_id": "hack_squat",
+        "exercise_label": "Machine Hack Squat",
+        "sets": 3,
+        "rep_range": "8-10",
+        "target_rir": 1.5,
+        "recommended_load_kg": 110.0,
+        "rest_seconds": 90,
+        "intensifier_type": "lengthened_partials_last_set",
+        "biomechanical_notes": "Feet low on platform for maximal knee flexion and quad stretch; eliminate spinal shear."
+      },
+      {
+        "exercise_id": "seated_leg_curl",
+        "exercise_label": "Seated Hamstring Leg Curl",
+        "sets": 3,
+        "rep_range": "10-12",
+        "target_rir": 1.0,
+        "recommended_load_kg": 62.5,
+        "rest_seconds": 60,
+        "intensifier_type": "antagonist_paired_set",
+        "paired_with_exercise_id": "hack_squat",
+        "biomechanical_notes": "Torso hinged forward for peak hamstring stretch. Paired with Hack Squats to cut rest overhead."
+      },
+      {
+        "exercise_id": "chest_supported_tbar_row",
+        "exercise_label": "Chest-Supported T-Bar Row",
+        "sets": 1,
+        "rep_range": "10-12 (Activation) + 3x3 (Myo-Reps)",
+        "target_rir": 0.5,
+        "recommended_load_kg": 75.0,
+        "rest_seconds": 15,
+        "intensifier_type": "myo_reps_rest_pause",
+        "biomechanical_notes": "1 heavy activation set to 1 RIR, rest 15s, execute 3 mini-sets of 3 reps. Achieves 4 straight sets of tension in 3.5 minutes."
+      }
+    ]
+  },
+  "telemetry": {
+    "latency_ms": 1120,
+    "prompt_tokens": 780,
+    "completion_tokens": 164,
+    "effective_volume_preservation_pct": 91.5
+  },
+  "committed_at": "2026-09-27T18:15:00.000Z"
+}

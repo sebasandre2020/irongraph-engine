@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://irongraph.internal/schemas.json",
+  "title": "IronGraph-Engine Schema Registry",
+  "definitions": {
+    "DailyDrawbacks": {
+      "type": "object",
+      "properties": {
+        "sleep_hours": { "type": "number", "minimum": 0, "maximum": 24 },
+        "available_minutes": { "type": "integer", "minimum": 10, "maximum": 240 },
+        "occupied_equipment": { "type": "array", "items": { "type": "string" } },
+        "localized_pain_symptoms": { "type": "array", "items": { "type": "string" } },
+        "subjective_readiness_1_to_10": { "type": "integer", "minimum": 1, "maximum": 10 }
+      },
+      "required": ["sleep_hours", "available_minutes"]
+    },
+    "AdaptedExerciseSet": {
+      "type": "object",
+      "properties": {
+        "exercise_id": { "type": "string" },
+        "exercise_label": { "type": "string" },
+        "sets": { "type": "integer", "minimum": 1 },
+        "rep_range": { "type": "string" },
+        "target_rir": { "type": "number" },
+        "recommended_load_kg": { "type": "number" },
+        "rest_seconds": { "type": "integer" },
+        "intensifier_type": { "type": "string" },
+        "biomechanical_notes": { "type": "string" }
+      },
+      "required": ["exercise_id", "exercise_label", "sets", "rep_range", "target_rir"]
+    },
+    "AdaptedWorkout": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "estimated_duration_min": { "type": "integer" },
+        "total_effective_sets": { "type": "integer" },
+        "sfr_rating": { "type": "string" },
+        "exercises": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/AdaptedExerciseSet" }
+        }
+      },
+      "required": ["title", "estimated_duration_min", "total_effective_sets", "exercises"]
+    }
+  }
+}

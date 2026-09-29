@@ -1,0 +1,11 @@
+{
+  "routine_text": "DÍA 3: LEGS A (Cuádriceps Focus)\nLeg Curl (Isquios): 2 x 12-15\nHack Squat: 2 x 8-10 (50kg)\nExtensión Cuádriceps: 2 x 15-20 (80 lbs)\nPantorrillas De Pie: 3 x 10-15 (17.5 kg)\nElevación de Piernas Colgado: 3 x Fallo",
+  "selected_day": "day_3",
+  "sleep_hours": 5.0,
+  "baseline_sleep_hours": 8.0,
+  "available_minutes": 25,
+  "occupied_equipment": ["hack_squat"],
+  "localized_pain_symptoms": ["dolor_lumbar"],
+  "subjective_readiness_1_to_10": 5,
+  "preferred_language": "es"
+}

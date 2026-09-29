@@ -1,0 +1,11 @@
+{
+  "target_exercise_id": "barbell_back_squat",
+  "reason_for_substitution": "occupied_equipment_and_lumbar_fatigue",
+  "available_equipment": [
+    "hack_squat_machine",
+    "leg_press_machine",
+    "dumbbells"
+  ],
+  "max_axial_stress": 4,
+  "top_k": 2
+}

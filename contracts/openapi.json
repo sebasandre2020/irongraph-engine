@@ -1,0 +1,311 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "IronGraph-Engine Headless API",
+    "description": "Graph-augmented workout autoregulation engine and sports performance service for maximizing hypertrophy",
+    "version": "0.1.0",
+    "contact": {
+      "name": "Principal AI Systems Architect"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "Local development server"
+    },
+    {
+      "url": "https://api.irongraph.internal",
+      "description": "Production internal cluster endpoint"
+    }
+  ],
+  "paths": {
+    "/health/live": {
+      "get": {
+        "summary": "Liveness Probe",
+        "description": "Checks if the API process is alive",
+        "operationId": "getLiveness",
+        "responses": {
+          "200": {
+            "description": "Service is alive",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "summary": "Readiness Probe",
+        "description": "Checks database, redis, and qdrant dependencies",
+        "operationId": "getReadiness",
+        "responses": {
+          "200": {
+            "description": "All dependencies healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthStatus"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "One or more dependencies unhealthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/lifters": {
+      "post": {
+        "summary": "Register Lifter Profile",
+        "description": "Initializes a lifter profile with volume landmarks (MEV, MRV) and baseline 1RMs",
+        "operationId": "createLifter",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLifterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Lifter profile registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LifterResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/lifters/{lifter_id}": {
+      "get": {
+        "summary": "Get Lifter Profile",
+        "description": "Retrieves volume landmarks, current fatigue state, and active contraindications",
+        "operationId": "getLifter",
+        "parameters": [
+          {
+            "name": "lifter_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lifter profile retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LifterResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/lifters/{lifter_id}/adapt": {
+      "post": {
+        "summary": "Adapt Workout to Atypical Friction",
+        "description": "Autoregulates planned session based on sleep, time, equipment, or joint drawbacks with SSE streaming",
+        "operationId": "adaptWorkout",
+        "parameters": [
+          {
+            "name": "lifter_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdaptationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Workout adapted and streamed via Server-Sent Events",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "SSE stream emitting token, workout_delta, and complete events"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdaptationResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Lifter session locked by another concurrent adaptation",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/exercises/substitute": {
+      "post": {
+        "summary": "1:1 Biomechanical Exercise Substitution",
+        "description": "Finds biomechanically compatible exercise substitutes matching target muscle length-tension curves",
+        "operationId": "substituteExercise",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExerciseSubstitutionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Matching substitutes found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseSubstitutionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HealthStatus": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string" },
+          "version": { "type": "string" },
+          "components": { "type": "object" }
+        },
+        "required": ["status"]
+      },
+      "CreateLifterRequest": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "experience_tier": { "type": "string", "enum": ["beginner", "intermediate", "advanced"] },
+          "volume_landmarks_mev_mrv": { "type": "object" },
+          "baseline_1rms": { "type": "object" },
+          "active_contraindications": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["name"]
+      },
+      "LifterResponse": {
+        "type": "object",
+        "properties": {
+          "lifter_id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "experience_tier": { "type": "string" },
+          "volume_landmarks_mev_mrv": { "type": "object" },
+          "created_at": { "type": "string", "format": "date-time" }
+        },
+        "required": ["lifter_id", "name"]
+      },
+      "AdaptationRequest": {
+        "type": "object",
+        "properties": {
+          "planned_workout_id": { "type": "string", "format": "uuid" },
+          "drawbacks": {
+            "type": "object",
+            "properties": {
+              "sleep_hours": { "type": "number" },
+              "available_minutes": { "type": "integer" },
+              "occupied_equipment": { "type": "array", "items": { "type": "string" } },
+              "localized_pain_symptoms": { "type": "array", "items": { "type": "string" } }
+            },
+            "required": ["sleep_hours", "available_minutes"]
+          }
+        },
+        "required": ["drawbacks"]
+      },
+      "AdaptationResponse": {
+        "type": "object",
+        "properties": {
+          "adaptation_id": { "type": "string" },
+          "lifter_id": { "type": "string", "format": "uuid" },
+          "status": { "type": "string" },
+          "coaching_rationale": { "type": "string" },
+          "adapted_workout": { "type": "object" },
+          "committed_at": { "type": "string", "format": "date-time" }
+        },
+        "required": ["adaptation_id", "status", "coaching_rationale", "adapted_workout"]
+      },
+      "ExerciseSubstitutionRequest": {
+        "type": "object",
+        "properties": {
+          "target_exercise_id": { "type": "string" },
+          "reason_for_substitution": { "type": "string" },
+          "available_equipment": { "type": "array", "items": { "type": "string" } },
+          "max_axial_stress": { "type": "integer" }
+        },
+        "required": ["target_exercise_id"]
+      },
+      "ExerciseSubstitutionResponse": {
+        "type": "object",
+        "properties": {
+          "substitutes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "exercise_id": { "type": "string" },
+                "name": { "type": "string" },
+                "axial_stress": { "type": "integer" },
+                "compatibility_score": { "type": "number" }
+              }
+            }
+          }
+        },
+        "required": ["substitutes"]
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string" },
+          "title": { "type": "string" },
+          "status": { "type": "integer" },
+          "detail": { "type": "string" }
+        },
+        "required": ["title", "status"]
+      }
+    }
+  }
+}

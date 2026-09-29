@@ -1,0 +1,43 @@
+{
+  "title": "Lower Body & Upper Pull Hypertrophy A",
+  "target_duration_min": 70,
+  "target_muscle_groups": ["quads", "hamstrings", "lats", "upper_back"],
+  "exercises": [
+    {
+      "exercise_id": "barbell_back_squat",
+      "exercise_label": "Barbell Back Squat",
+      "planned_sets": 4,
+      "planned_reps": "6-8",
+      "target_rir": 2,
+      "planned_load_kg": 125.0,
+      "rest_seconds": 180
+    },
+    {
+      "exercise_id": "barbell_bent_over_row",
+      "exercise_label": "Barbell Bent-Over Row",
+      "planned_sets": 4,
+      "planned_reps": "8-10",
+      "target_rir": 2,
+      "planned_load_kg": 85.0,
+      "rest_seconds": 150
+    },
+    {
+      "exercise_id": "romanian_deadlift",
+      "exercise_label": "Barbell Romanian Deadlift",
+      "planned_sets": 3,
+      "planned_reps": "8-10",
+      "target_rir": 2,
+      "planned_load_kg": 115.0,
+      "rest_seconds": 180
+    },
+    {
+      "exercise_id": "seated_leg_curl",
+      "exercise_label": "Seated Hamstring Leg Curl",
+      "planned_sets": 3,
+      "planned_reps": "10-12",
+      "target_rir": 1,
+      "planned_load_kg": 65.0,
+      "rest_seconds": 90
+    }
+  ]
+}
