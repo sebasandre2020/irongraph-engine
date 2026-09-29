@@ -29,7 +29,7 @@ def main() -> int:
         "requirements-dev.txt",
         ".env.example",
         ".gitignore",
-        ".github/workflows/scaffold.yml",
+        "infra/workflows/scaffold.yml",
         "contracts/openapi.json",
         "contracts/schemas.json",
         "infra/postgres/001_init_schema.sql",
