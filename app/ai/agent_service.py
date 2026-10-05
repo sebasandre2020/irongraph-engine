@@ -23,6 +23,40 @@ from app.schemas.routine_agent import (
 )
 
 
+def round_gym_weight(weight: float, unit: str = "kg", equipment: str = "general") -> float:
+    """Rounds weight to realistic commercial gym increments (dumbbells, plates, pin stacks)."""
+    if weight <= 0:
+        return 0.0
+    if unit == "lbs":
+        step = 5.0 if weight >= 40 else 2.5
+        rounded = round(weight / step) * step
+        return round(rounded, 1) if rounded % 1 != 0 else int(rounded)
+    else:
+        eq_lower = equipment.lower()
+        if "dumbbell" in eq_lower or "mancuerna" in eq_lower:
+            step = 2.0 if weight < 24 else 2.5
+        elif "cable" in eq_lower or "polea" in eq_lower:
+            step = 2.5 if weight < 40 else 5.0
+        else:  # Barbell or heavy plate machine
+            step = 2.5 if weight < 80 else 5.0
+        rounded = round(weight / step) * step
+        return round(rounded, 1) if rounded % 1 != 0 else int(rounded)
+
+
+def classify_equipment(equipment: str, exercise_name: str) -> str:
+    """Categorizes equipment to optimize gym-floor logistics."""
+    eq = (equipment + " " + exercise_name).lower()
+    if any(k in eq for k in ["dumbbell", "mancuerna"]):
+        return "dumbbell"
+    elif any(k in eq for k in ["cable", "polea", "jalón", "jalon"]):
+        return "cable"
+    elif any(k in eq for k in ["barbell", "barra", "rack", "banca", "bench"]):
+        return "barbell"
+    elif any(k in eq for k in ["machine", "máquina", "maquina", "hack", "press", "curl"]):
+        return "machine"
+    return "bodyweight"
+
+
 class PersonalHypertrophyAgent:
     """Consumable agent service that adapts personal training plans to daily life friction."""
 
@@ -111,13 +145,38 @@ class PersonalHypertrophyAgent:
                 else:
                     sub_name = f"{original.name} (Variante con Mancuernas)"
 
-            # Calculate adapted load
+            eq_cat = classify_equipment(original.required_equipment, original.name)
+
+            # Calculate adapted load with realistic gym increments
             adapted_load_str = None
+            load_delta_percent = None
+            if load_scale < 1.0:
+                load_delta_percent = -int(round((1.0 - load_scale) * 100))
+
             if original.load_kg:
-                scaled_kg = round(original.load_kg * load_scale, 1)
-                adapted_load_str = f"{scaled_kg} kg"
+                scaled_kg = original.load_kg * load_scale
+                rounded_kg = round_gym_weight(scaled_kg, unit="kg", equipment=original.required_equipment)
+                adapted_load_str = f"{rounded_kg} kg"
             elif original.load_str:
-                adapted_load_str = f"{original.load_str} (autoregulado x{load_scale:.2f})"
+                import re
+                if "lbs" in original.load_str.lower():
+                    m = re.search(r'(\d+(?:\.\d+)?)', original.load_str)
+                    if m:
+                        val = float(m.group(1)) * load_scale
+                        rounded_lbs = round_gym_weight(val, unit="lbs")
+                        adapted_load_str = f"{rounded_lbs} lbs"
+                    else:
+                        adapted_load_str = f"{original.load_str} (autoregulado)"
+                elif "kg" in original.load_str.lower():
+                    m = re.search(r'(\d+(?:\.\d+)?)', original.load_str)
+                    if m:
+                        val = float(m.group(1)) * load_scale
+                        rounded_kg = round_gym_weight(val, unit="kg", equipment=original.required_equipment)
+                        adapted_load_str = f"{rounded_kg} kg"
+                    else:
+                        adapted_load_str = f"{original.load_str} (autoregulado)"
+                else:
+                    adapted_load_str = f"{original.load_str} (autoregulado)"
 
             # Intensifiers & Time-Density Compression
             status_tag = "PRESERVED"
@@ -136,12 +195,18 @@ class PersonalHypertrophyAgent:
                     if j not in paired_indices:
                         other = target_day.exercises[j]
                         # Pair Push + Pull or Leg Extensions + Curls
-                        is_pairable = (
+                        motion_ok = (
                             ("press" in original.movement_pattern and "pull" in other.movement_pattern) or
                             ("pull" in original.movement_pattern and "press" in other.movement_pattern) or
                             ("flexion" in original.movement_pattern and "extension" in other.movement_pattern) or
                             ("extension" in original.movement_pattern and "flexion" in other.movement_pattern)
                         )
+                        station_ok = True
+                        if request.same_station_only:
+                            other_cat = classify_equipment(other.required_equipment, other.name)
+                            station_ok = (eq_cat == other_cat and eq_cat in ["dumbbell", "cable"])
+
+                        is_pairable = motion_ok and station_ok
                         if is_pairable:
                             paired_indices.add(i)
                             paired_indices.add(j)
@@ -193,6 +258,8 @@ class PersonalHypertrophyAgent:
                 adapted_sets=adapted_sets,
                 adapted_reps=adapted_reps,
                 adapted_load=adapted_load_str or original.load_str,
+                load_delta_percent=load_delta_percent,
+                equipment_category=eq_cat,
                 rest_seconds=rest_sec,
                 status_tag=status_tag,
                 change_rationale=" | ".join(rationale_notes),

@@ -2,7 +2,7 @@
 <html lang="es" class="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>IronGraph Engine - Personal Hypertrophy Assistant</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -27,150 +27,226 @@
     }
   </script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
-    body { font-family: 'Plus Jakarta Sans', sans-serif; }
-    pre, code { font-family: 'JetBrains Mono', monospace; }
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+    pre, code, .font-mono { font-family: 'JetBrains Mono', monospace; }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0b1120; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+    /* Pulse glow */
+    @keyframes subtle-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.85; transform: scale(1.02); }
+    }
+    .pulse-active { animation: subtle-pulse 2s infinite ease-in-out; }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-black">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-black pb-24 lg:pb-8">
 
   <!-- Header -->
-  <header class="border-b border-slate-800/80 bg-slate-900/50 backdrop-blur sticky top-0 z-50">
+  <header class="border-b border-slate-800/80 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Logo & Title -->
       <div class="flex items-center space-x-3">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-500 to-accent-500 flex items-center justify-center shadow-lg shadow-brand-500/20">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-500 to-accent-500 flex items-center justify-center shadow-lg shadow-brand-500/20 flex-shrink-0">
           <span class="text-xl">⚡</span>
         </div>
         <div>
           <div class="flex items-center space-x-2">
-            <h1 class="text-base font-bold tracking-tight text-white">IronGraph Engine</h1>
-            <span class="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/20">AI Autoregulation</span>
+            <h1 class="text-base font-extrabold tracking-tight text-white">IronGraph Engine</h1>
+            <span class="hidden sm:inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/20">Hypertrophy AI</span>
           </div>
-          <p class="text-xs text-slate-400">Personal Hypertrophy Assistant & Routine Autoregulator</p>
+          <p class="text-xs text-slate-400 hidden sm:block">Autoregulación Inteligente & Modo Gimnasio en Vivo</p>
         </div>
       </div>
-      <div class="flex items-center space-x-3">
-        <span class="flex items-center text-xs font-medium text-slate-400 bg-slate-800/60 px-2.5 py-1 rounded-lg border border-slate-700/50">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse mr-2"></span>
-          Minimax AI Agent Active
-        </span>
-        <a href="/docs" target="_blank" class="text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-700 transition">
-          Swagger API ↗
+
+      <!-- Action & Status Controls -->
+      <div class="flex items-center space-x-2 sm:space-x-3">
+        <!-- Gym Peak Station Toggle -->
+        <button id="sameStationBtn" type="button" onclick="toggleSameStation()" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg border transition flex items-center space-x-1.5 bg-slate-800/80 border-slate-700 text-slate-300 hover:text-white" title="Prioriza superseries en la misma estación o con mancuernas para horas pico">
+          <span>👥</span>
+          <span class="hidden md:inline">Misma Estación:</span>
+          <span id="sameStationBadge" class="text-[10px] px-1.5 py-0.2 rounded bg-slate-700 text-slate-400">OFF</span>
+        </button>
+
+        <!-- Unit Switcher -->
+        <button id="unitBtn" type="button" onclick="toggleUnits()" class="text-xs font-bold px-2.5 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-brand-400 hover:bg-slate-700 transition">
+          <span id="unitBadge">KG</span>
+        </button>
+
+        <!-- API Link -->
+        <a href="/docs" target="_blank" class="text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/60 hover:bg-slate-700 px-2.5 py-1.5 rounded-lg border border-slate-700/60 transition hidden sm:inline-block">
+          Swagger ↗
         </a>
       </div>
+
     </div>
   </header>
 
-  <!-- Main Content -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+  <!-- Mobile View Switcher Tabs (Sticky under header) -->
+  <div class="lg:hidden sticky top-16 z-40 bg-slate-900/95 border-b border-slate-800 px-4 py-2 flex items-center justify-center space-x-2 backdrop-blur">
+    <button id="tabConfigBtn" type="button" onclick="switchMobileTab('config')" class="flex-1 py-2 text-xs font-bold rounded-xl transition text-center bg-brand-500 text-slate-950 shadow-md">
+      ⚙️ 1. Inconvenientes & Plan
+    </button>
+    <button id="tabGymBtn" type="button" onclick="switchMobileTab('gym')" class="flex-1 py-2 text-xs font-bold rounded-xl transition text-center bg-slate-800 text-slate-300 hover:text-white">
+      🏋️ 2. Modo Gimnasio <span id="tabGymDot" class="inline-block w-2 h-2 rounded-full bg-brand-400 ml-1 hidden"></span>
+    </button>
+  </div>
 
-    <!-- Top Drawbacks Control Bar -->
-    <div class="bg-slate-900/80 rounded-2xl border border-slate-800 p-5 shadow-xl relative overflow-hidden">
+  <!-- Main Content -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-5">
+
+    <!-- Day Selector Carousel (Zero-friction 1-tap day loading) -->
+    <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-3.5 shadow-lg">
+      <div class="flex items-center justify-between mb-2.5 px-1">
+        <div class="flex items-center space-x-2">
+          <span class="text-sm">📅</span>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Seleccionar Día de Rutina</span>
+        </div>
+        <span class="text-[11px] text-slate-400">1-Tap para cargar de <code class="text-brand-400 text-[10px]">GymRutine.txt</code></span>
+      </div>
+      <!-- Scrollable Day Pills -->
+      <div id="dayCarousel" class="flex space-x-2 overflow-x-auto pb-1.5 pt-0.5 no-scrollbar">
+        <div class="text-xs text-slate-500 py-1">Cargando días disponibles...</div>
+      </div>
+    </div>
+
+    <!-- Top Drawbacks Control Bar (Zero-Typing Experience) -->
+    <div id="drawbacksSection" class="bg-slate-900/90 rounded-2xl border border-slate-800 p-5 shadow-xl relative overflow-hidden">
       <div class="absolute -right-16 -top-16 w-64 h-64 bg-brand-500/5 rounded-full blur-3xl pointer-events-none"></div>
       
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-slate-800/80 mb-4 gap-2">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-3.5 border-b border-slate-800/80 mb-4 gap-2">
         <div class="flex items-center space-x-2">
           <span class="text-lg">🎯</span>
-          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300">Inconvenientes del Día (Drawbacks)</h2>
+          <div>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-200">Inconvenientes del Día (Drawbacks)</h2>
+            <p class="text-xs text-slate-400">Selecciona con un toque tus limitaciones de hoy para autoregular volumen y biomecánica</p>
+          </div>
         </div>
-        <span class="text-xs text-slate-400">Configura tus limitaciones de hoy para que el agente recalibre el estímulo</span>
+        <button type="button" onclick="resetDrawbacks()" class="text-[11px] text-slate-400 hover:text-rose-400 transition underline">
+          Limpiar Inconvenientes
+        </button>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         
-        <!-- Sleep Slider -->
-        <div class="space-y-2 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800/60">
-          <div class="flex items-center justify-between text-xs font-medium">
+        <!-- 1. Sleep Slider -->
+        <div class="space-y-2 bg-slate-950/70 p-3.5 rounded-xl border border-slate-800/70">
+          <div class="flex items-center justify-between text-xs font-semibold">
             <span class="text-slate-300 flex items-center">😴 Horas de Sueño</span>
-            <span id="sleepDisplay" class="font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">5.0 hrs</span>
+            <span id="sleepDisplay" class="font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20 font-mono">5.0 hrs</span>
           </div>
-          <input id="sleepInput" type="range" min="3" max="10" step="0.5" value="5" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-brand-500">
+          <input id="sleepInput" type="range" min="3" max="10" step="0.5" value="5" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-brand-500">
           <div class="flex justify-between text-[10px] text-slate-500">
-            <span>Déficit severo</span>
-            <span class="text-slate-400 font-medium">Meta: 8.0 hrs</span>
-            <span>Óptimo</span>
+            <span id="sleepStateLabel" class="text-amber-400 font-semibold">Déficit moderado (-10% carga)</span>
+            <span class="text-slate-400">Meta: 8.0h</span>
           </div>
         </div>
 
-        <!-- Available Time Chips -->
-        <div class="space-y-2 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800/60">
-          <div class="flex items-center justify-between text-xs font-medium">
+        <!-- 2. Available Time Chips -->
+        <div class="space-y-2 bg-slate-950/70 p-3.5 rounded-xl border border-slate-800/70">
+          <div class="flex items-center justify-between text-xs font-semibold">
             <span class="text-slate-300 flex items-center">⏱️ Tiempo Disponible</span>
-            <span id="timeDisplay" class="font-bold text-accent-400 bg-accent-400/10 px-2 py-0.5 rounded border border-accent-400/20">30 min</span>
+            <span id="timeDisplay" class="font-bold text-accent-400 bg-accent-400/10 px-2 py-0.5 rounded border border-accent-400/20 font-mono">30 min</span>
           </div>
-          <div class="grid grid-cols-4 gap-1.5">
-            <button type="button" onclick="setTime(20)" class="time-btn text-xs py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">20m</button>
-            <button type="button" onclick="setTime(30)" class="time-btn text-xs py-1 rounded bg-brand-500 text-slate-950 font-bold transition">30m</button>
-            <button type="button" onclick="setTime(45)" class="time-btn text-xs py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">45m</button>
-            <button type="button" onclick="setTime(60)" class="time-btn text-xs py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">60m</button>
+          <div class="grid grid-cols-5 gap-1">
+            <button type="button" onclick="setTime(20)" class="time-btn text-xs py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition">20m</button>
+            <button type="button" onclick="setTime(30)" class="time-btn text-xs py-1.5 rounded-lg bg-brand-500 text-slate-950 font-bold transition shadow">30m</button>
+            <button type="button" onclick="setTime(45)" class="time-btn text-xs py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition">45m</button>
+            <button type="button" onclick="setTime(60)" class="time-btn text-xs py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition">60m</button>
+            <button type="button" onclick="setTime(90)" class="time-btn text-xs py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition">90m</button>
           </div>
           <input type="hidden" id="timeInput" value="30">
+          <div class="text-[10px] text-slate-400 flex items-center justify-between">
+            <span>&le; 30m activa <b class="text-purple-400">Myo-Reps</b></span>
+            <span>&le; 45m activa <b class="text-sky-400">APS Superseries</b></span>
+          </div>
         </div>
 
-        <!-- Machine Blockers -->
-        <div class="space-y-1.5 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800/60">
-          <div class="flex items-center justify-between text-xs font-medium">
+        <!-- 3. Machine Blockers (Visual Chips) -->
+        <div class="space-y-2 bg-slate-950/70 p-3.5 rounded-xl border border-slate-800/70">
+          <div class="flex items-center justify-between text-xs font-semibold">
             <span class="text-slate-300 flex items-center">🚫 Máquinas Ocupadas</span>
+            <span id="blockedCountBadge" class="text-[10px] font-mono text-emerald-400">1 seleccionada</span>
           </div>
-          <input id="equipmentInput" type="text" value="squat_rack" placeholder="Ej: squat_rack, polea, hack" class="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-2.5 py-1 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500">
-          <div class="flex flex-wrap gap-1 text-[10px]">
-            <button type="button" onclick="toggleTag('equipmentInput', 'squat_rack')" class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700">+ Squat Rack</button>
-            <button type="button" onclick="toggleTag('equipmentInput', 'hack_squat')" class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700">+ Hack</button>
-            <button type="button" onclick="toggleTag('equipmentInput', 'polea')" class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700">+ Polea</button>
+          <div class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-0.5">
+            <button type="button" data-tag="squat_rack" onclick="toggleVisualTag(this, 'equipmentTags')" class="tag-chip active-chip text-[11px] px-2 py-1 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 font-medium transition flex items-center space-x-1">
+              <span>🏋️</span> <span>Squat Rack</span>
+            </button>
+            <button type="button" data-tag="hack_squat" onclick="toggleVisualTag(this, 'equipmentTags')" class="tag-chip text-[11px] px-2 py-1 rounded-lg border border-slate-700 bg-slate-850 hover:bg-slate-800 text-slate-300 font-medium transition flex items-center space-x-1">
+              <span>🦿</span> <span>Hack</span>
+            </button>
+            <button type="button" data-tag="leg_press" onclick="toggleVisualTag(this, 'equipmentTags')" class="tag-chip text-[11px] px-2 py-1 rounded-lg border border-slate-700 bg-slate-850 hover:bg-slate-800 text-slate-300 font-medium transition flex items-center space-x-1">
+              <span>📐</span> <span>Prensa 45°</span>
+            </button>
+            <button type="button" data-tag="polea" onclick="toggleVisualTag(this, 'equipmentTags')" class="tag-chip text-[11px] px-2 py-1 rounded-lg border border-slate-700 bg-slate-850 hover:bg-slate-800 text-slate-300 font-medium transition flex items-center space-x-1">
+              <span>🧵</span> <span>Polea/Cable</span>
+            </button>
+            <button type="button" data-tag="banco_plano" onclick="toggleVisualTag(this, 'equipmentTags')" class="tag-chip text-[11px] px-2 py-1 rounded-lg border border-slate-700 bg-slate-850 hover:bg-slate-800 text-slate-300 font-medium transition flex items-center space-x-1">
+              <span>🪑</span> <span>Banco</span>
+            </button>
           </div>
         </div>
 
-        <!-- Pain / Discomfort -->
-        <div class="space-y-1.5 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800/60">
-          <div class="flex items-center justify-between text-xs font-medium">
+        <!-- 4. Pain / Discomfort (Anatomical Chips) -->
+        <div class="space-y-2 bg-slate-950/70 p-3.5 rounded-xl border border-slate-800/70">
+          <div class="flex items-center justify-between text-xs font-semibold">
             <span class="text-slate-300 flex items-center">⚠️ Molestias / Dolor</span>
+            <span id="painCountBadge" class="text-[10px] font-mono text-amber-400">1 seleccionada</span>
           </div>
-          <input id="painInput" type="text" value="lower_back_tightness" placeholder="Ej: dolor lumbar, hombro" class="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-2.5 py-1 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500">
-          <div class="flex flex-wrap gap-1 text-[10px]">
-            <button type="button" onclick="toggleTag('painInput', 'lower_back_tightness')" class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700">+ Lumbar</button>
-            <button type="button" onclick="toggleTag('painInput', 'hombro')" class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700">+ Hombro</button>
-            <button type="button" onclick="toggleTag('painInput', 'rodilla')" class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700">+ Rodilla</button>
+          <div class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-0.5">
+            <button type="button" data-tag="lower_back_tightness" onclick="toggleVisualTag(this, 'painTags')" class="tag-chip active-chip text-[11px] px-2 py-1 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-300 font-medium transition flex items-center space-x-1">
+              <span>🦴</span> <span>Lumbar</span>
+            </button>
+            <button type="button" data-tag="hombro" onclick="toggleVisualTag(this, 'painTags')" class="tag-chip text-[11px] px-2 py-1 rounded-lg border border-slate-700 bg-slate-850 hover:bg-slate-800 text-slate-300 font-medium transition flex items-center space-x-1">
+              <span>💪</span> <span>Hombro</span>
+            </button>
+            <button type="button" data-tag="rodilla" onclick="toggleVisualTag(this, 'painTags')" class="tag-chip text-[11px] px-2 py-1 rounded-lg border border-slate-700 bg-slate-850 hover:bg-slate-800 text-slate-300 font-medium transition flex items-center space-x-1">
+              <span>🦵</span> <span>Rodilla</span>
+            </button>
+            <button type="button" data-tag="codo" onclick="toggleVisualTag(this, 'painTags')" class="tag-chip text-[11px] px-2 py-1 rounded-lg border border-slate-700 bg-slate-850 hover:bg-slate-800 text-slate-300 font-medium transition flex items-center space-x-1">
+              <span>🦾</span> <span>Codo</span>
+            </button>
+            <button type="button" data-tag="muñeca" onclick="toggleVisualTag(this, 'painTags')" class="tag-chip text-[11px] px-2 py-1 rounded-lg border border-slate-700 bg-slate-850 hover:bg-slate-800 text-slate-300 font-medium transition flex items-center space-x-1">
+              <span>✋</span> <span>Muñeca</span>
+            </button>
           </div>
         </div>
 
       </div>
     </div>
 
-    <!-- Dual-Pane Container -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+    <!-- Dual-Pane Container / Responsive Stack -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-      <!-- LEFT PANE: Original Routine -->
-      <div class="bg-slate-900 rounded-2xl border border-slate-800 flex flex-col h-[750px] shadow-xl overflow-hidden">
+      <!-- LEFT PANE: Routine Text Input (Col 5 on desktop) -->
+      <div id="leftPane" class="lg:col-span-5 bg-slate-900 rounded-2xl border border-slate-800 flex flex-col h-[650px] lg:h-[750px] shadow-xl overflow-hidden">
         
         <!-- Left Header -->
         <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/90">
           <div class="flex items-center space-x-2">
             <span class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
-            <h3 class="text-sm font-bold text-white tracking-wide uppercase">Plan Actual / Rutina Subida</h3>
+            <h3 class="text-xs font-bold text-white tracking-wide uppercase">Plan Original / Entrada de Texto</h3>
           </div>
-          
-          <!-- Example Selector -->
-          <div class="flex items-center space-x-2">
-            <select id="exampleDaySelect" onchange="loadSelectedDay(this.value)" class="text-xs bg-slate-800 border border-slate-700 text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-brand-500">
-              <option value="">📂 Cargar de GymRutine.txt...</option>
-            </select>
-          </div>
+          <span id="charCount" class="text-[10px] text-slate-400 font-mono">0 chars</span>
         </div>
 
         <!-- Left Input Area -->
-        <div class="p-5 flex-1 flex flex-col space-y-3 overflow-hidden">
-          <label class="text-xs font-semibold text-slate-400 flex items-center justify-between">
-            <span>Texto de tu rutina (pega o edita libremente):</span>
-            <span id="charCount" class="text-[10px] text-slate-500">0 caracteres</span>
-          </label>
-          <textarea id="routineTextArea" spellcheck="false" class="flex-1 w-full bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-brand-500 font-mono leading-relaxed resize-none" placeholder="Pega aquí tu rutina tal como la tienes en texto...&#10;&#10;Ejemplo:&#10;DÍA 1: PULL A&#10;Jalón al pecho: 4 series x 12 reps (120kg)&#10;Remo sentado: 3 series x 12 reps (59kg)&#10;Mid row maquina: 3 series x 10 reps&#10;Curl predicador: 2 series x 12 reps (15kg)"></textarea>
+        <div class="p-4 flex-1 flex flex-col space-y-3 overflow-hidden">
+          <p class="text-[11px] text-slate-400 leading-normal">
+            Pega tu rutina o selecciona un día arriba. El agente analiza series, repeticiones y cargas automáticamente.
+          </p>
+          <textarea id="routineTextArea" spellcheck="false" class="flex-1 w-full bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-brand-500 font-mono leading-relaxed resize-none" placeholder="Pega aquí tu rutina...&#10;&#10;Ejemplo:&#10;DÍA 1: PULL A&#10;Jalón al pecho: 4 series x 12 reps (120kg)&#10;Remo sentado: 3 series x 12 reps (59kg)&#10;Mid row maquina: 3 series x 10 reps&#10;Curl predicador: 2 series x 12 reps (15kg)"></textarea>
 
-          <div class="flex items-center justify-between pt-2">
-            <label class="text-xs text-slate-400 flex items-center cursor-pointer hover:text-slate-200">
-              <span class="mr-1.5">📄</span> Subir archivo .txt
+          <div class="flex items-center justify-between pt-1">
+            <label class="text-xs text-slate-400 flex items-center cursor-pointer hover:text-slate-200 transition">
+              <span class="mr-1.5">📄</span> Subir .txt
               <input type="file" id="fileUpload" accept=".txt" class="hidden" onchange="handleFileUpload(event)">
             </label>
-            <button id="adaptBtn" onclick="runAdaptation()" class="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-500 to-emerald-600 hover:from-brand-400 hover:to-emerald-500 text-slate-950 font-bold text-xs tracking-wider uppercase shadow-lg shadow-brand-500/20 transition transform active:scale-95">
+            <button id="adaptBtn" onclick="runAdaptation()" class="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-500 to-emerald-600 hover:from-brand-400 hover:to-emerald-500 text-slate-950 font-extrabold text-xs tracking-wider uppercase shadow-lg shadow-brand-500/20 transition transform active:scale-95">
               <span>⚡ Adaptar Plan de Hoy</span>
             </button>
           </div>
@@ -178,31 +254,31 @@
 
       </div>
 
-      <!-- RIGHT PANE: Adapted Plan for Today -->
-      <div class="bg-slate-900 rounded-2xl border border-slate-800 flex flex-col h-[750px] shadow-xl overflow-hidden">
+      <!-- RIGHT PANE: Adapted Plan & Live Gym Mode (Col 7 on desktop) -->
+      <div id="rightPane" class="lg:col-span-7 bg-slate-900 rounded-2xl border border-slate-800 flex flex-col h-[750px] shadow-xl overflow-hidden">
         
-        <!-- Right Header -->
-        <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/90">
+        <!-- Right Header with Progress -->
+        <div class="px-5 py-3.5 border-b border-slate-800 flex items-center justify-between bg-slate-900/90">
           <div class="flex items-center space-x-2">
             <span class="w-2.5 h-2.5 rounded-full bg-brand-400 animate-pulse"></span>
-            <h3 class="text-sm font-bold text-white tracking-wide uppercase">Plan Ajustado para Hoy</h3>
+            <h3 class="text-xs font-bold text-white tracking-wide uppercase">Plan Ajustado & Modo Gimnasio</h3>
           </div>
           <div id="statusBadge" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/20">
-            Listo para adaptar
+            Listo para entrenar
           </div>
         </div>
 
         <!-- Right Content Area -->
-        <div id="rightContainer" class="p-5 flex-1 flex flex-col space-y-4 overflow-y-auto">
+        <div id="rightContainer" class="p-4 sm:p-5 flex-1 flex flex-col space-y-4 overflow-y-auto">
           
           <!-- Empty State -->
           <div id="emptyState" class="flex-1 flex flex-col items-center justify-center text-center p-8 space-y-3">
-            <div class="w-16 h-16 rounded-2xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-2xl">
+            <div class="w-16 h-16 rounded-2xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-3xl shadow-inner">
               🏋️
             </div>
-            <h4 class="text-sm font-bold text-slate-300">Sin adaptación generada todavía</h4>
-            <p class="text-xs text-slate-500 max-w-sm">
-              Selecciona o pega una rutina en la izquierda, ajusta tus inconvenientes de hoy (sueño, tiempo o dolores) y pulsa <strong class="text-slate-400">"Adaptar Plan de Hoy"</strong>.
+            <h4 class="text-sm font-bold text-slate-200">Sin adaptación generada todavía</h4>
+            <p class="text-xs text-slate-400 max-w-sm leading-relaxed">
+              Elige un día arriba o pega tu plan, configura tus inconvenientes de hoy y pulsa <strong class="text-brand-400">"⚡ Adaptar Plan de Hoy"</strong> para activar el modo gimnasio.
             </p>
           </div>
 
@@ -210,8 +286,8 @@
           <div id="loadingState" class="hidden flex-1 flex flex-col items-center justify-center text-center p-8 space-y-4">
             <div class="w-12 h-12 border-4 border-brand-500/20 border-t-brand-500 rounded-full animate-spin"></div>
             <div class="space-y-1">
-              <h4 class="text-sm font-bold text-slate-200">El Agente de Hipertrofia está analizando tu plan...</h4>
-              <p class="text-xs text-slate-400">Evaluando biomecánica, emparejamientos APS y recalculando RIR/cargas</p>
+              <h4 class="text-sm font-bold text-slate-200">El Agente de Hipertrofia está recalculando...</h4>
+              <p class="text-xs text-slate-400">Optimizando emparejamientos APS, protección articular y redondeo a placas comerciales</p>
             </div>
           </div>
 
@@ -219,43 +295,101 @@
           <div id="resultView" class="hidden space-y-4">
             
             <!-- Hero Metrics Banner -->
-            <div class="grid grid-cols-3 gap-2.5 bg-slate-950/70 p-3.5 rounded-xl border border-slate-800">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-950/80 p-3 rounded-xl border border-slate-800">
               <div class="text-center p-2 rounded-lg bg-slate-900/60 border border-slate-800/60">
                 <span class="block text-[10px] text-slate-400 uppercase font-semibold">Duración</span>
-                <span id="metricDuration" class="text-base font-extrabold text-accent-400">28 min</span>
+                <span id="metricDuration" class="text-base font-extrabold text-accent-400 font-mono">28 min</span>
                 <span id="metricSaved" class="block text-[10px] text-emerald-400 font-medium">-32 min</span>
               </div>
               <div class="text-center p-2 rounded-lg bg-slate-900/60 border border-slate-800/60">
                 <span class="block text-[10px] text-slate-400 uppercase font-semibold">Volumen Efectivo</span>
-                <span class="text-base font-extrabold text-emerald-400">100%</span>
-                <span class="block text-[10px] text-slate-400">0 series perdidas</span>
+                <span class="text-base font-extrabold text-emerald-400 font-mono">100%</span>
+                <span class="block text-[10px] text-slate-400">0 series basura</span>
               </div>
               <div class="text-center p-2 rounded-lg bg-slate-900/60 border border-slate-800/60">
                 <span class="block text-[10px] text-slate-400 uppercase font-semibold">Rating SFR</span>
-                <span id="metricSfr" class="text-base font-extrabold text-brand-400">VERY HIGH</span>
-                <span class="block text-[10px] text-slate-400">Protección articular</span>
+                <span id="metricSfr" class="text-base font-extrabold text-brand-400 font-mono">VERY HIGH</span>
+                <span class="block text-[10px] text-slate-400">Sin estrés espinal</span>
+              </div>
+              <div class="text-center p-2 rounded-lg bg-slate-900/60 border border-slate-800/60">
+                <span class="block text-[10px] text-slate-400 uppercase font-semibold">Progreso Sesión</span>
+                <span id="metricCompletedSets" class="text-base font-extrabold text-white font-mono">0 / 0</span>
+                <span id="metricPercent" class="block text-[10px] text-slate-400">0% completado</span>
               </div>
             </div>
 
-            <!-- AI Coaching Rationale -->
-            <div class="bg-gradient-to-r from-brand-950/40 to-slate-900 border border-brand-500/20 rounded-xl p-4 text-xs space-y-2">
-              <div class="flex items-center justify-between text-brand-400 font-bold uppercase tracking-wider text-[11px]">
+            <!-- In-Session Rest Timer & Progress Bar (Sticky/Prominent Gym-Floor Tool) -->
+            <div class="bg-gradient-to-r from-slate-950 to-slate-900 border border-brand-500/30 rounded-xl p-3.5 space-y-3 shadow-lg">
+              
+              <!-- Session Progress Bar -->
+              <div>
+                <div class="flex justify-between text-xs font-semibold text-slate-300 mb-1">
+                  <span class="flex items-center space-x-1.5">
+                    <span>🔥</span> <span>Progreso en Sala de Entrenamiento</span>
+                  </span>
+                  <span id="progressSummary" class="text-brand-400 font-mono text-[11px]">0 series marcadas</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                  <div id="progressBar" class="bg-gradient-to-r from-brand-500 to-accent-400 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+              </div>
+
+              <!-- Floating / Compact Rest Timer -->
+              <div class="flex items-center justify-between bg-slate-900/90 rounded-lg p-2.5 border border-slate-800">
+                <div class="flex items-center space-x-2.5">
+                  <div id="timerPulseRing" class="w-8 h-8 rounded-full bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-xs text-brand-400">
+                    ⏱️
+                  </div>
+                  <div>
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cronómetro de Descanso</div>
+                    <div id="timerDisplay" class="text-lg font-extrabold text-white font-mono tracking-wider">01:30</div>
+                  </div>
+                </div>
+                <div class="flex items-center space-x-1.5">
+                  <button type="button" onclick="startRestTimer()" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-brand-500 hover:bg-brand-400 text-slate-950 transition">
+                    ▶ Iniciar
+                  </button>
+                  <button type="button" onclick="pauseRestTimer()" class="px-2 py-1 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                    ⏸ Pausa
+                  </button>
+                  <button type="button" onclick="addRestTimerSeconds(30)" class="px-2 py-1 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                    +30s
+                  </button>
+                  <button type="button" onclick="resetRestTimer()" class="px-2 py-1 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                    ↻
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- ACTIONABLE EXERCISES (Rendered FIRST for zero-scroll mobile gym use) -->
+            <div class="space-y-2.5">
+              <div class="flex items-center justify-between text-xs font-bold text-slate-300 uppercase tracking-wider px-1">
                 <span class="flex items-center space-x-1.5">
+                  <span>💪</span>
+                  <span>Ejercicios Adaptados para Hoy</span>
+                </span>
+                <span id="exerciseCountBadge" class="text-[10px] text-brand-400 font-mono"></span>
+              </div>
+              
+              <!-- Exercise Cards List -->
+              <div id="exerciseCardsContainer" class="space-y-3"></div>
+            </div>
+
+            <!-- Scientific AI Coaching Rationale (Collapsible Accordion: Secondary / Deep Dive) -->
+            <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/60">
+              <button type="button" onclick="toggleRationaleAccordion()" class="w-full px-4 py-3 flex items-center justify-between text-left text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-900/60 transition">
+                <span class="flex items-center space-x-2">
                   <span>🧠</span>
                   <span>Criterio Científico del Asistente (Minimax AI)</span>
+                  <span class="text-[10px] text-brand-400 font-normal px-2 py-0.5 rounded-full bg-brand-500/10 border border-brand-500/20">Schoenfeld & Israetel</span>
                 </span>
-                <span class="text-[10px] font-normal text-slate-400">Schoenfeld & Israetel Hypertrophy Model</span>
+                <span id="rationaleChevron" class="text-slate-400 font-mono">▼</span>
+              </button>
+              <div id="rationaleContent" class="hidden px-4 pb-4 pt-1 text-xs text-slate-300 leading-relaxed border-t border-slate-800/80 whitespace-pre-line">
+                <p id="coachingText"></p>
               </div>
-              <p id="coachingText" class="text-slate-300 leading-relaxed whitespace-pre-line"></p>
-            </div>
-
-            <!-- Exercise Comparison Cards -->
-            <div class="space-y-2.5">
-              <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider px-1">
-                <span>Ejercicios Adaptados para Hoy</span>
-                <span id="exerciseCountBadge" class="text-[10px] text-brand-400"></span>
-              </div>
-              <div id="exerciseCardsContainer" class="space-y-2.5"></div>
             </div>
 
           </div>
@@ -263,12 +397,17 @@
         </div>
 
         <!-- Right Footer -->
-        <div id="resultFooter" class="hidden px-5 py-3 border-t border-slate-800 bg-slate-900/80 flex items-center justify-between">
-          <span class="text-[11px] text-slate-400">💡 Rutina lista para ejecutar en el gimnasio hoy</span>
-          <button onclick="copyAdaptedRoutine()" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center space-x-1.5">
-            <span>📋</span>
-            <span>Copiar Rutina</span>
-          </button>
+        <div id="resultFooter" class="hidden px-5 py-3 border-t border-slate-800 bg-slate-900/90 flex items-center justify-between">
+          <span class="text-[11px] text-slate-400">💡 Toca las series (S1, S2...) para tacharlas y activar el descanso</span>
+          <div class="flex items-center space-x-2">
+            <button onclick="resetSessionChecks()" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-rose-300 border border-slate-700 transition" title="Reiniciar series completadas">
+              ↺ Reset Series
+            </button>
+            <button onclick="copyAdaptedRoutine()" class="text-xs font-bold px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-400 text-slate-950 transition flex items-center space-x-1.5 shadow">
+              <span>📋</span>
+              <span>Copiar Resumen</span>
+            </button>
+          </div>
         </div>
 
       </div>
@@ -278,14 +417,46 @@
   </main>
 
   <script>
+    // State management
     let currentAdaptedData = null;
     let preloadedDays = [];
+    let completedSets = new Set();
+    let currentUnit = 'KG';
+    let sameStationOnly = false;
 
-    // Initialize sleep slider
+    // Rest Timer state
+    let timerDuration = 90;
+    let timerRemaining = 90;
+    let timerInterval = null;
+    let isTimerRunning = false;
+    let audioCtx = null;
+
+    // Active Drawback Tags
+    let activeEquipmentTags = new Set(['squat_rack']);
+    let activePainTags = new Set(['lower_back_tightness']);
+
+    // Sleep slider logic
     const sleepInput = document.getElementById('sleepInput');
     const sleepDisplay = document.getElementById('sleepDisplay');
+    const sleepStateLabel = document.getElementById('sleepStateLabel');
+
     sleepInput.addEventListener('input', (e) => {
-      sleepDisplay.textContent = parseFloat(e.target.value).toFixed(1) + ' hrs';
+      const val = parseFloat(e.target.value);
+      sleepDisplay.textContent = val.toFixed(1) + ' hrs';
+      if (val < 5.0) {
+        sleepStateLabel.textContent = 'Déficit severo (-15% carga)';
+        sleepStateLabel.className = 'text-rose-400 font-semibold';
+        sleepDisplay.className = 'font-bold text-rose-400 bg-rose-400/10 px-2 py-0.5 rounded border border-rose-400/20 font-mono';
+      } else if (val < 6.5) {
+        sleepStateLabel.textContent = 'Déficit moderado (-10% carga)';
+        sleepStateLabel.className = 'text-amber-400 font-semibold';
+        sleepDisplay.className = 'font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20 font-mono';
+      } else {
+        sleepStateLabel.textContent = 'Sueño óptimo (100% carga)';
+        sleepStateLabel.className = 'text-emerald-400 font-semibold';
+        sleepDisplay.className = 'font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20 font-mono';
+      }
+      saveToStorage();
     });
 
     // Time button setter
@@ -294,26 +465,111 @@
       document.getElementById('timeDisplay').textContent = mins + ' min';
       document.querySelectorAll('.time-btn').forEach(btn => {
         if (btn.textContent.trim() === mins + 'm') {
-          btn.className = 'time-btn text-xs py-1 rounded bg-brand-500 text-slate-950 font-bold transition';
+          btn.className = 'time-btn text-xs py-1.5 rounded-lg bg-brand-500 text-slate-950 font-bold transition shadow';
         } else {
-          btn.className = 'time-btn text-xs py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition';
+          btn.className = 'time-btn text-xs py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition';
         }
       });
+      saveToStorage();
     }
 
-    // Tag toggle helper
-    function toggleTag(inputId, tag) {
-      const input = document.getElementById(inputId);
-      const parts = input.value.split(',').map(s => s.trim()).filter(Boolean);
-      if (parts.includes(tag)) {
-        input.value = parts.filter(p => p !== tag).join(', ');
+    // Toggle interactive tag chips
+    function toggleVisualTag(btn, category) {
+      const tag = btn.getAttribute('data-tag');
+      const set = (category === 'equipmentTags') ? activeEquipmentTags : activePainTags;
+      
+      if (set.has(tag)) {
+        set.delete(tag);
+        btn.className = 'tag-chip text-[11px] px-2 py-1 rounded-lg border border-slate-700 bg-slate-850 hover:bg-slate-800 text-slate-300 font-medium transition flex items-center space-x-1';
       } else {
-        parts.push(tag);
-        input.value = parts.join(', ');
+        set.add(tag);
+        if (category === 'equipmentTags') {
+          btn.className = 'tag-chip active-chip text-[11px] px-2 py-1 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 font-medium transition flex items-center space-x-1';
+        } else {
+          btn.className = 'tag-chip active-chip text-[11px] px-2 py-1 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-300 font-medium transition flex items-center space-x-1';
+        }
+      }
+
+      // Update badge counters
+      document.getElementById('blockedCountBadge').textContent = `${activeEquipmentTags.size} seleccionada${activeEquipmentTags.size !== 1 ? 's' : ''}`;
+      document.getElementById('painCountBadge').textContent = `${activePainTags.size} seleccionada${activePainTags.size !== 1 ? 's' : ''}`;
+      saveToStorage();
+    }
+
+    function resetDrawbacks() {
+      activeEquipmentTags.clear();
+      activePainTags.clear();
+      document.querySelectorAll('.tag-chip').forEach(btn => {
+        btn.className = 'tag-chip text-[11px] px-2 py-1 rounded-lg border border-slate-700 bg-slate-850 hover:bg-slate-800 text-slate-300 font-medium transition flex items-center space-x-1';
+      });
+      document.getElementById('blockedCountBadge').textContent = '0 seleccionadas';
+      document.getElementById('painCountBadge').textContent = '0 seleccionadas';
+      setTime(45);
+      sleepInput.value = 8.0;
+      sleepInput.dispatchEvent(new Event('input'));
+    }
+
+    // Toggle same-station constraint
+    function toggleSameStation() {
+      sameStationOnly = !sameStationOnly;
+      const badge = document.getElementById('sameStationBadge');
+      const btn = document.getElementById('sameStationBtn');
+      if (sameStationOnly) {
+        badge.textContent = 'ON';
+        badge.className = 'text-[10px] px-1.5 py-0.2 rounded bg-brand-500 text-slate-950 font-bold';
+        btn.className = 'text-xs font-semibold px-2.5 py-1.5 rounded-lg border transition flex items-center space-x-1.5 bg-brand-500/10 border-brand-500/40 text-brand-300';
+      } else {
+        badge.textContent = 'OFF';
+        badge.className = 'text-[10px] px-1.5 py-0.2 rounded bg-slate-700 text-slate-400';
+        btn.className = 'text-xs font-semibold px-2.5 py-1.5 rounded-lg border transition flex items-center space-x-1.5 bg-slate-800/80 border-slate-700 text-slate-300 hover:text-white';
+      }
+      saveToStorage();
+    }
+
+    // Unit toggle (KG vs LBS)
+    function toggleUnits() {
+      currentUnit = (currentUnit === 'KG') ? 'LBS' : 'KG';
+      document.getElementById('unitBadge').textContent = currentUnit;
+      if (currentAdaptedData) {
+        renderResults(currentAdaptedData);
+      }
+      saveToStorage();
+    }
+
+    // Mobile tabs switcher
+    function switchMobileTab(tab) {
+      const leftPane = document.getElementById('leftPane');
+      const rightPane = document.getElementById('rightPane');
+      const tabConfigBtn = document.getElementById('tabConfigBtn');
+      const tabGymBtn = document.getElementById('tabGymBtn');
+
+      if (tab === 'config') {
+        leftPane.classList.remove('hidden');
+        rightPane.classList.add('hidden');
+        tabConfigBtn.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition text-center bg-brand-500 text-slate-950 shadow-md';
+        tabGymBtn.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition text-center bg-slate-800 text-slate-300 hover:text-white';
+      } else {
+        leftPane.classList.add('hidden');
+        rightPane.classList.remove('hidden');
+        tabConfigBtn.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition text-center bg-slate-800 text-slate-300 hover:text-white';
+        tabGymBtn.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition text-center bg-brand-500 text-slate-950 shadow-md';
       }
     }
 
-    // Load example days on startup
+    // Toggle rationale accordion
+    function toggleRationaleAccordion() {
+      const content = document.getElementById('rationaleContent');
+      const chevron = document.getElementById('rationaleChevron');
+      if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        chevron.textContent = '▲';
+      } else {
+        content.classList.add('hidden');
+        chevron.textContent = '▼';
+      }
+    }
+
+    // Load available days from GymRutine.txt
     async function loadExampleIndex() {
       try {
         const res = await fetch('/v1/agent/example-routine');
@@ -321,37 +577,50 @@
         const data = await res.json();
         preloadedDays = data.available_days || [];
         
-        const select = document.getElementById('exampleDaySelect');
-        select.innerHTML = '<option value="">📂 Cargar de GymRutine.txt...</option>';
-        preloadedDays.forEach(day => {
-          const opt = document.createElement('option');
-          opt.value = day.day_id;
-          opt.textContent = `${day.title} (${day.exercise_count} ejerc.)`;
-          select.appendChild(opt);
+        const carousel = document.getElementById('dayCarousel');
+        carousel.innerHTML = '';
+
+        preloadedDays.forEach((day, index) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `flex-shrink-0 text-xs px-3 py-1.5 rounded-xl border transition flex items-center space-x-1.5 font-semibold ${
+            index === 0 
+              ? 'bg-brand-500/10 text-brand-300 border-brand-500/40 shadow-sm' 
+              : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-700'
+          }`;
+          btn.setAttribute('data-day-id', day.day_id);
+          btn.innerHTML = `<span>⚡</span> <span>${day.title}</span> <span class="text-[10px] text-slate-400 font-mono">(${day.exercise_count})</span>`;
+          btn.onclick = () => selectDayPill(day.day_id);
+          carousel.appendChild(btn);
         });
 
-        // Set default to Day 1
-        if (preloadedDays.length > 0) {
-          loadSelectedDay(preloadedDays[0].day_id);
-          select.value = preloadedDays[0].day_id;
+        // Load saved state or default to Day 1
+        restoreFromStorage();
+        if (!document.getElementById('routineTextArea').value.trim() && preloadedDays.length > 0) {
+          selectDayPill(preloadedDays[0].day_id);
         }
       } catch (err) {
-        console.error('Failed to load examples:', err);
+        console.error('Failed to load example days:', err);
       }
     }
 
-    // Load day content into textarea
-    async function loadSelectedDay(dayId) {
-      if (!dayId) return;
+    // Select Day pill
+    async function selectDayPill(dayId) {
+      document.querySelectorAll('#dayCarousel button').forEach(btn => {
+        if (btn.getAttribute('data-day-id') === dayId) {
+          btn.className = 'flex-shrink-0 text-xs px-3 py-1.5 rounded-xl border transition flex items-center space-x-1.5 font-semibold bg-brand-500/20 text-brand-300 border-brand-500/50 shadow-md ring-1 ring-brand-500/30';
+        } else {
+          btn.className = 'flex-shrink-0 text-xs px-3 py-1.5 rounded-xl border transition flex items-center space-x-1.5 font-semibold bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-700';
+        }
+      });
+
       try {
         const res = await fetch('/v1/agent/example-routine');
         const data = await res.json();
         const fullText = data.full_text || '';
-        
-        // Find matching section in full text
         const target = preloadedDays.find(d => d.day_id === dayId);
         if (!target) return;
-        
+
         const lines = fullText.replace(/\u200b/g, '').split('\n');
         let capturing = false;
         let dayLines = [];
@@ -362,27 +631,28 @@
           } else if (capturing && /^\s*(?:[•\-*]\s*)?(?:d[íi]a\s*\d+|day\s*\d+)/i.test(line)) {
             break;
           }
-          if (capturing) {
-            dayLines.push(line);
-          }
+          if (capturing) dayLines.push(line);
         }
 
         const routineText = dayLines.join('\n') || target.title + '\n' + target.exercises.join('\n');
         document.getElementById('routineTextArea').value = routineText;
         updateCharCount();
+        saveToStorage();
       } catch (e) {
-        console.error('Error loading day:', e);
+        console.error('Error loading selected day:', e);
       }
     }
 
-    // Update char counter
     function updateCharCount() {
       const len = document.getElementById('routineTextArea').value.length;
-      document.getElementById('charCount').textContent = `${len} caracteres`;
+      document.getElementById('charCount').textContent = `${len} chars`;
     }
-    document.getElementById('routineTextArea').addEventListener('input', updateCharCount);
+    document.getElementById('routineTextArea').addEventListener('input', () => {
+      updateCharCount();
+      saveToStorage();
+    });
 
-    // File upload
+    // File upload handler
     function handleFileUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -390,15 +660,16 @@
       reader.onload = (evt) => {
         document.getElementById('routineTextArea').value = evt.target.result;
         updateCharCount();
+        saveToStorage();
       };
       reader.readAsText(file, 'UTF-8');
     }
 
-    // Trigger Adaptation
+    // Trigger AI Adaptation
     async function runAdaptation() {
       const routineText = document.getElementById('routineTextArea').value.trim();
       if (!routineText) {
-        alert('Por favor ingresa o selecciona una rutina primero.');
+        alert('Por favor selecciona o pega una rutina primero.');
         return;
       }
 
@@ -407,7 +678,7 @@
       document.getElementById('resultView').classList.add('hidden');
       document.getElementById('resultFooter').classList.add('hidden');
       document.getElementById('loadingState').classList.remove('hidden');
-      document.getElementById('statusBadge').textContent = 'Adaptando...';
+      document.getElementById('statusBadge').textContent = 'Recalculando...';
       document.getElementById('statusBadge').className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20';
 
       const payload = {
@@ -415,10 +686,11 @@
         sleep_hours: parseFloat(document.getElementById('sleepInput').value),
         baseline_sleep_hours: 8.0,
         available_minutes: parseInt(document.getElementById('timeInput').value),
-        occupied_equipment: document.getElementById('equipmentInput').value.split(',').map(s => s.trim()).filter(Boolean),
-        localized_pain_symptoms: document.getElementById('painInput').value.split(',').map(s => s.trim()).filter(Boolean),
+        occupied_equipment: Array.from(activeEquipmentTags),
+        localized_pain_symptoms: Array.from(activePainTags),
         subjective_readiness_1_to_10: 5,
-        preferred_language: 'es'
+        preferred_language: 'es',
+        same_station_only: sameStationOnly
       };
 
       try {
@@ -435,7 +707,15 @@
 
         const data = await res.json();
         currentAdaptedData = data;
+        completedSets.clear();
         renderResults(data);
+        saveToStorage();
+
+        // On mobile, automatically show Gym Tab after adaptation
+        if (window.innerWidth < 1024) {
+          switchMobileTab('gym');
+          document.getElementById('tabGymDot').classList.remove('hidden');
+        }
 
       } catch (err) {
         alert('Error: ' + err.message);
@@ -446,12 +726,12 @@
       }
     }
 
-    // Render results into right pane
+    // Render results in Gym Mode
     function renderResults(data) {
       document.getElementById('loadingState').classList.add('hidden');
       document.getElementById('resultView').classList.remove('hidden');
       document.getElementById('resultFooter').classList.remove('hidden');
-      document.getElementById('statusBadge').textContent = '✅ Adaptación Completada';
+      document.getElementById('statusBadge').textContent = '✅ En Modo Entrenamiento';
       document.getElementById('statusBadge').className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
 
       // Metrics
@@ -460,8 +740,7 @@
       document.getElementById('metricSfr').textContent = data.sfr_rating;
       document.getElementById('exerciseCountBadge').textContent = `${data.adapted_exercises_count} ejercicios`;
 
-      // Coaching prose
-      // Strip think tags if present
+      // AI Coaching prose
       let cleanProse = data.coaching_rationale || '';
       cleanProse = cleanProse.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
       document.getElementById('coachingText').textContent = cleanProse;
@@ -470,72 +749,289 @@
       const container = document.getElementById('exerciseCardsContainer');
       container.innerHTML = '';
 
-      data.comparisons.forEach((item, index) => {
-        const card = document.createElement('div');
-        card.className = 'bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 space-y-2 hover:border-slate-700 transition';
+      let totalSetsInSession = 0;
 
-        // Tag style
+      data.comparisons.forEach((item, exIndex) => {
+        const card = document.createElement('div');
+        card.className = 'bg-slate-950/90 border border-slate-800 rounded-xl p-4 space-y-3 hover:border-slate-700/80 transition shadow-sm';
+
+        // Tag styling
         let tagBg = 'bg-slate-800 text-slate-300 border-slate-700';
         let tagLabel = item.status_tag;
 
         if (item.status_tag === 'SUBSTITUTED') {
-          tagBg = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+          tagBg = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
           tagLabel = '🔄 SUSTITUIDO';
         } else if (item.status_tag === 'APS_PAIRED') {
-          tagBg = 'bg-sky-500/10 text-sky-400 border-sky-500/30';
+          tagBg = 'bg-sky-500/15 text-sky-400 border-sky-500/30';
           tagLabel = '⚡ APS SUPERSET';
         } else if (item.status_tag === 'LOAD_AUTOREGULATED') {
-          tagBg = 'bg-amber-500/10 text-amber-400 border-amber-500/30';
+          tagBg = 'bg-amber-500/15 text-amber-400 border-amber-500/30';
           tagLabel = '📉 CARGA RECALCULADA';
         } else if (item.status_tag === 'MYO_REPS') {
-          tagBg = 'bg-purple-500/10 text-purple-400 border-purple-500/30';
+          tagBg = 'bg-purple-500/15 text-purple-400 border-purple-500/30';
           tagLabel = '💥 MYO-REPS';
         } else {
           tagLabel = '✓ PRESERVADO';
         }
 
-        card.innerHTML = `
-          <div class="flex items-start justify-between gap-2">
+        // Check if load changed or unit needs formatting
+        let loadDisplayHtml = '';
+        if (item.adapted_load) {
+          if (item.original_load && item.original_load !== item.adapted_load) {
+            loadDisplayHtml = `
+              <span class="inline-flex items-center space-x-1">
+                <span class="text-slate-500 line-through text-[11px]">${item.original_load}</span>
+                <span class="text-slate-200 font-bold text-xs">➔ ${item.adapted_load}</span>
+                ${item.load_delta_percent ? `<span class="text-[10px] text-amber-400 font-mono">(${item.load_delta_percent}%)</span>` : ''}
+              </span>
+            `;
+          } else {
+            loadDisplayHtml = `<span class="text-slate-200 font-bold text-xs">${item.adapted_load}</span>`;
+          }
+        }
+
+        // Exercise substitution visual diff
+        let nameHtml = `<span class="text-xs font-bold text-white">${item.adapted_name}</span>`;
+        if (item.original_name !== item.adapted_name) {
+          nameHtml = `
             <div>
               <div class="flex items-center space-x-2">
-                <span class="text-xs font-bold text-white">${item.adapted_name}</span>
+                <span class="text-xs font-extrabold text-white">${item.adapted_name}</span>
                 <span class="text-[9px] font-semibold uppercase px-2 py-0.5 rounded border ${tagBg}">${tagLabel}</span>
               </div>
-              <div class="text-[11px] text-slate-400 mt-0.5">
-                ${item.adapted_sets} series × ${item.adapted_reps} reps
-                ${item.adapted_load ? `<span class="text-slate-300 font-semibold">• ${item.adapted_load}</span>` : ''}
-                <span class="text-slate-500">• ${item.rest_seconds}s descanso</span>
+              <div class="text-[10px] text-slate-500">
+                <span>Original:</span> <span class="line-through">${item.original_name}</span>
               </div>
             </div>
-            ${item.original_name !== item.adapted_name ? `
-              <div class="text-[10px] text-slate-500 text-right">
-                <span class="line-through">${item.original_name}</span>
-              </div>
-            ` : ''}
+          `;
+        } else {
+          nameHtml = `
+            <div class="flex items-center space-x-2">
+              <span class="text-xs font-extrabold text-white">${item.adapted_name}</span>
+              <span class="text-[9px] font-semibold uppercase px-2 py-0.5 rounded border ${tagBg}">${tagLabel}</span>
+            </div>
+          `;
+        }
+
+        // Generate Set Checkboxes for Gym Floor tracking
+        const setCount = item.adapted_sets || 3;
+        totalSetsInSession += setCount;
+        let setButtonsHtml = '';
+        for (let s = 1; s <= setCount; s++) {
+          const setId = `set_${exIndex}_${s}`;
+          const isDone = completedSets.has(setId);
+          setButtonsHtml += `
+            <button type="button" onclick="toggleSetCheck('${setId}', ${item.rest_seconds})" class="set-check-btn px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition flex items-center space-x-1 ${
+              isDone 
+                ? 'bg-emerald-500 text-slate-950 shadow-md ring-1 ring-emerald-400' 
+                : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80'
+            }">
+              <span>${isDone ? '✓' : ''} S${s}</span>
+            </button>
+          `;
+        }
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-2">
+            ${nameHtml}
+            <button type="button" onclick="loadExerciseRestTimer(${item.rest_seconds})" class="text-[10px] text-slate-400 hover:text-accent-400 font-mono px-2 py-0.5 rounded bg-slate-900 border border-slate-800 flex items-center space-x-1">
+              <span>⏱️</span> <span>${item.rest_seconds}s</span>
+            </button>
           </div>
-          <div class="text-[11px] text-slate-400 bg-slate-900/60 p-2 rounded-lg border border-slate-800/60 flex items-start space-x-1.5">
+
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-300 bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/60">
+            <span class="font-semibold text-white">${item.adapted_sets} series × ${item.adapted_reps} reps</span>
+            ${loadDisplayHtml ? `<span class="text-slate-400">• ${loadDisplayHtml}</span>` : ''}
+            <span class="text-slate-400">• <b class="text-slate-300">${item.rest_seconds}s</b> descanso</span>
+          </div>
+
+          <!-- Series Check Buttons -->
+          <div class="flex items-center space-x-2 pt-1">
+            <span class="text-[10px] text-slate-500 uppercase font-semibold">Marcar:</span>
+            <div class="flex flex-wrap gap-1.5">${setButtonsHtml}</div>
+          </div>
+
+          <!-- Biomechanical Rationale -->
+          <div class="text-[11px] text-slate-400 bg-slate-900/40 p-2 rounded-lg border border-slate-800/40 flex items-start space-x-1.5">
             <span class="text-brand-400 mt-0.5 text-xs">↳</span>
             <span class="leading-normal">${item.change_rationale}</span>
           </div>
         `;
         container.appendChild(card);
       });
+
+      updateSessionProgress(totalSetsInSession);
     }
 
-    // Copy adapted workout text
+    // Toggle set completion check
+    function toggleSetCheck(setId, restSec) {
+      if (completedSets.has(setId)) {
+        completedSets.delete(setId);
+      } else {
+        completedSets.add(setId);
+        // Start rest timer automatically!
+        loadExerciseRestTimer(restSec);
+        startRestTimer();
+      }
+
+      if (currentAdaptedData) {
+        renderResults(currentAdaptedData);
+      }
+      saveToStorage();
+    }
+
+    function resetSessionChecks() {
+      completedSets.clear();
+      if (currentAdaptedData) {
+        renderResults(currentAdaptedData);
+      }
+      saveToStorage();
+    }
+
+    // Update Progress Bar
+    function updateSessionProgress(totalSets) {
+      const completed = completedSets.size;
+      const total = totalSets || 1;
+      const pct = Math.min(100, Math.round((completed / total) * 100));
+
+      document.getElementById('metricCompletedSets').textContent = `${completed} / ${total}`;
+      document.getElementById('metricPercent').textContent = `${pct}% completado`;
+      document.getElementById('progressBar').style.width = `${pct}%`;
+      document.getElementById('progressSummary').textContent = `${completed} de ${total} series (${pct}%)`;
+    }
+
+    // Rest Timer Logic & Audio Synth Beep
+    function loadExerciseRestTimer(seconds) {
+      timerDuration = seconds;
+      timerRemaining = seconds;
+      updateTimerDisplay();
+    }
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    function updateTimerDisplay() {
+      document.getElementById('timerDisplay').textContent = formatTime(timerRemaining);
+    }
+
+    function startRestTimer() {
+      if (isTimerRunning) return;
+      isTimerRunning = true;
+      document.getElementById('timerPulseRing').classList.add('pulse-active');
+
+      timerInterval = setInterval(() => {
+        if (timerRemaining > 0) {
+          timerRemaining--;
+          updateTimerDisplay();
+        } else {
+          pauseRestTimer();
+          playTimerBeep();
+        }
+      }, 1000);
+    }
+
+    function pauseRestTimer() {
+      isTimerRunning = false;
+      clearInterval(timerInterval);
+      document.getElementById('timerPulseRing').classList.remove('pulse-active');
+    }
+
+    function addRestTimerSeconds(sec) {
+      timerRemaining += sec;
+      updateTimerDisplay();
+    }
+
+    function resetRestTimer() {
+      pauseRestTimer();
+      timerRemaining = timerDuration;
+      updateTimerDisplay();
+    }
+
+    // Web Audio completion sound
+    function playTimerBeep() {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.6);
+      } catch (e) {
+        console.warn('Audio feedback error:', e);
+      }
+    }
+
+    // Copy adapted workout text formatted for WhatsApp/Notes
     function copyAdaptedRoutine() {
       if (!currentAdaptedData) return;
-      let text = `🏋️ RUTINA AUTOREGULADA (${currentAdaptedData.detected_day_title})\n`;
-      text += `⏱️ Duración: ${currentAdaptedData.estimated_duration_min} min | Volumen Efectivo: 100%\n\n`;
+      let text = `🏋️ RUTINA AUTOREGULADA: ${currentAdaptedData.detected_day_title}\n`;
+      text += `⏱️ Duración: ${currentAdaptedData.estimated_duration_min} min | SFR: ${currentAdaptedData.sfr_rating}\n\n`;
+      
       currentAdaptedData.comparisons.forEach((item, i) => {
         text += `${i+1}. ${item.adapted_name}: ${item.adapted_sets} series x ${item.adapted_reps} reps`;
         if (item.adapted_load) text += ` (${item.adapted_load})`;
-        text += ` [${item.rest_seconds}s desc.]\n`;
-        text += `   Nota: ${item.change_rationale}\n\n`;
+        text += ` [${item.rest_seconds}s descanso]\n`;
+        text += `   ↳ Nota: ${item.change_rationale}\n\n`;
       });
+
       navigator.clipboard.writeText(text).then(() => {
-        alert('¡Rutina copiada al portapapeles!');
+        alert('¡Resumen de la rutina copiado al portapapeles!');
       });
+    }
+
+    // LocalStorage Persistence
+    function saveToStorage() {
+      try {
+        const state = {
+          routineText: document.getElementById('routineTextArea').value,
+          sleep: document.getElementById('sleepInput').value,
+          time: document.getElementById('timeInput').value,
+          equipment: Array.from(activeEquipmentTags),
+          pain: Array.from(activePainTags),
+          completedSets: Array.from(completedSets),
+          sameStation: sameStationOnly,
+          unit: currentUnit
+        };
+        localStorage.setItem('irongraph_session_state', JSON.stringify(state));
+      } catch (e) {
+        console.warn('Storage save failed:', e);
+      }
+    }
+
+    function restoreFromStorage() {
+      try {
+        const raw = localStorage.getItem('irongraph_session_state');
+        if (!raw) return;
+        const state = JSON.parse(raw);
+
+        if (state.routineText) {
+          document.getElementById('routineTextArea').value = state.routineText;
+          updateCharCount();
+        }
+        if (state.sleep) {
+          document.getElementById('sleepInput').value = state.sleep;
+          document.getElementById('sleepInput').dispatchEvent(new Event('input'));
+        }
+        if (state.time) {
+          setTime(parseInt(state.time));
+        }
+        if (Array.isArray(state.completedSets)) {
+          completedSets = new Set(state.completedSets);
+        }
+      } catch (e) {
+        console.warn('Storage restore failed:', e);
+      }
     }
 
     // Bootstrap

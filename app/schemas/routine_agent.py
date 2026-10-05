@@ -17,6 +17,8 @@ class ExerciseComparison(BaseModel):
     adapted_sets: int
     adapted_reps: str
     adapted_load: Optional[str] = None
+    load_delta_percent: Optional[int] = None
+    equipment_category: Optional[str] = None
     rest_seconds: int = 90
     status_tag: str = Field(..., description="E.g. PRESERVED, SUBSTITUTED, APS_PAIRED, LOAD_SCALED, MYO_REPS")
     change_rationale: str
@@ -34,6 +36,7 @@ class TextAdaptationRequest(BaseModel):
     localized_pain_symptoms: List[str] = Field(default_factory=list, description="Pain or joint issues (e.g. lower back, shoulder)")
     subjective_readiness_1_to_10: int = Field(default=5, ge=1, le=10, description="Readiness score")
     preferred_language: str = Field(default="es", description="Language for coaching output: 'es' or 'en'")
+    same_station_only: bool = Field(default=False, description="Prioritize same-station/dumbbell pairings for peak gym hours")
 
 
 class TextAdaptationResponse(BaseModel):

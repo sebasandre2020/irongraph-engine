@@ -113,7 +113,7 @@ KEYWORD_TAXONOMY = [
         "equipment": "tbar_machine"
     },
     {
-        "keywords": ["barbell row", "remo con barra", "remo inclinado"],
+        "keywords": ["barbell row", "remo con barra", "remo inclinado", "remo con mancuernas", "remo con mancuerna", "dumbbell row"],
         "name": "Barbell Bent-Over Row",
         "pattern": "horizontal_pull",
         "muscles": ["lats", "upper_back"],
@@ -155,7 +155,7 @@ KEYWORD_TAXONOMY = [
         "equipment": "dumbbells"
     },
     {
-        "keywords": ["press plano", "flat dumbbell press", "bench press", "press de banca"],
+        "keywords": ["press plano", "flat dumbbell press", "bench press", "press de banca", "press banca", "press banca plano"],
         "name": "Flat Dumbbell Press",
         "pattern": "horizontal_press",
         "muscles": ["chest", "triceps"],

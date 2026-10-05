@@ -74,12 +74,46 @@ def test_adapt_text_routine_with_drawbacks(client):
     # Check coaching rationale is populated
     assert len(data["coaching_rationale"]) > 20
 
+    # Check new fields: load_delta_percent & equipment_category
+    assert pulldown_comp["equipment_category"] is not None
+    assert pulldown_comp["load_delta_percent"] is not None
+    assert pulldown_comp["load_delta_percent"] < 0  # Reduced due to 5.0h sleep
+
+
+def test_smart_plate_rounding_and_station_pairing(client):
+    """Verify smart gym load increments and same_station_only constraint."""
+    from app.ai.agent_service import round_gym_weight
+
+    # Test barbell rounding
+    assert round_gym_weight(123.4, unit="kg", equipment="barbell") in [120, 122.5, 125]
+    # Test dumbbell rounding
+    assert round_gym_weight(21.3, unit="kg", equipment="dumbbell") in [20, 22]
+    # Test lbs rounding
+    assert round_gym_weight(136.2, unit="lbs") in [135, 140]
+
+    raw_snippet = """
+    DIA 1: TEST PAIR
+    Press de banca: 3 series x 10 reps. 80kg.
+    Remo con mancuernas: 3 series x 10 reps. 24kg.
+    """
+    payload = {
+        "routine_text": raw_snippet,
+        "available_minutes": 25,
+        "same_station_only": True
+    }
+    response = client.post("/v1/agent/adapt-routine", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["comparisons"]) == 2
+
 
 def test_frontend_home_route(client):
-    """GET / serves the interactive dual-pane HTML UI."""
+    """GET / serves the interactive responsive HTML UI with Gym Mode."""
     response = client.get("/")
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
     assert "IronGraph Engine" in response.text
     assert "Inconvenientes del Día" in response.text
-    assert "Plan Ajustado para Hoy" in response.text
+    assert "Cronómetro de Descanso" in response.text
+    assert "Modo Gimnasio" in response.text
+    assert "Seleccionar Día de Rutina" in response.text
