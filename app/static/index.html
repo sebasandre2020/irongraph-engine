@@ -736,7 +736,10 @@
 
       // Metrics
       document.getElementById('metricDuration').textContent = `${data.estimated_duration_min} min`;
-      document.getElementById('metricSaved').textContent = data.time_saved_min > 0 ? `-${data.time_saved_min} min ahorrados` : 'En tiempo';
+      const bufferHtml = data.transition_buffer_min > 0 
+        ? `<span class="block text-[9px] text-slate-400 font-normal">(${data.raw_exercise_time_min}m series + ${data.transition_buffer_min}m colchón)</span>` 
+        : '';
+      document.getElementById('metricSaved').innerHTML = `${data.time_saved_min > 0 ? `-${data.time_saved_min} min ahorrados` : 'En tiempo'} ${bufferHtml}`;
       document.getElementById('metricSfr').textContent = data.sfr_rating;
       document.getElementById('exerciseCountBadge').textContent = `${data.adapted_exercises_count} ejercicios`;
 
@@ -832,6 +835,13 @@
           `;
         }
 
+        // Deep decision details
+        const details = item.decision_details || {};
+        const selText = details.exercise_selection || item.change_rationale;
+        const volText = details.volume_and_sets || `${item.adapted_sets} series calibradas para mantener RIR 1-2 sin volumen basura.`;
+        const restText = details.rest_period || `${item.rest_seconds}s para permitir resíntesis de ATP/CP (Schoenfeld 2016).`;
+        const loadText = details.load_and_intensity || (item.adapted_load ? `Carga ${item.adapted_load} autoregulada.` : 'Carga mantenida.');
+
         card.innerHTML = `
           <div class="flex items-start justify-between gap-2">
             ${nameHtml}
@@ -852,16 +862,67 @@
             <div class="flex flex-wrap gap-1.5">${setButtonsHtml}</div>
           </div>
 
-          <!-- Biomechanical Rationale -->
+          <!-- Summary Note -->
           <div class="text-[11px] text-slate-400 bg-slate-900/40 p-2 rounded-lg border border-slate-800/40 flex items-start space-x-1.5">
             <span class="text-brand-400 mt-0.5 text-xs">↳</span>
             <span class="leading-normal">${item.change_rationale}</span>
+          </div>
+
+          <!-- Interactive Collapsible Scientific Decision Breakdown -->
+          <div class="pt-1">
+            <button type="button" onclick="toggleCardDetails('details_${exIndex}', this)" class="w-full text-[11px] font-semibold text-slate-400 hover:text-brand-300 bg-slate-900/60 hover:bg-slate-850 px-2.5 py-1.5 rounded-lg border border-slate-800/80 flex items-center justify-between transition group">
+              <span class="flex items-center space-x-1.5">
+                <span>🔬</span>
+                <span class="group-hover:underline">¿Por qué esta decisión? (Ver desglose biomecánico)</span>
+              </span>
+              <span class="card-chevron text-[10px] text-slate-500 font-mono transition-transform">▼</span>
+            </button>
+            <div id="details_${exIndex}" class="hidden mt-2 p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-[11px] space-y-2.5 shadow-inner">
+              <div class="space-y-0.5">
+                <span class="font-bold text-emerald-400 flex items-center space-x-1">
+                  <span>🎯</span> <span>Selección de Ejercicio y Biomecánica:</span>
+                </span>
+                <p class="text-slate-300 leading-relaxed pl-4">${selText}</p>
+              </div>
+              <div class="space-y-0.5">
+                <span class="font-bold text-sky-400 flex items-center space-x-1">
+                  <span>📊</span> <span>Series y Volumen Efectivo:</span>
+                </span>
+                <p class="text-slate-300 leading-relaxed pl-4">${volText}</p>
+              </div>
+              <div class="space-y-0.5">
+                <span class="font-bold text-amber-400 flex items-center space-x-1">
+                  <span>⏱️</span> <span>Descanso Óptimo (Evidencia Científica):</span>
+                </span>
+                <p class="text-slate-300 leading-relaxed pl-4">${restText}</p>
+              </div>
+              <div class="space-y-0.5">
+                <span class="font-bold text-purple-400 flex items-center space-x-1">
+                  <span>📉</span> <span>Carga de Trabajo y Tensión Mecánica:</span>
+                </span>
+                <p class="text-slate-300 leading-relaxed pl-4">${loadText}</p>
+              </div>
+            </div>
           </div>
         `;
         container.appendChild(card);
       });
 
       updateSessionProgress(totalSetsInSession);
+    }
+
+    // Toggle card details dropdown
+    function toggleCardDetails(id, btn) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const isHidden = el.classList.contains('hidden');
+      if (isHidden) {
+        el.classList.remove('hidden');
+        if (btn) btn.querySelector('.card-chevron').textContent = '▲';
+      } else {
+        el.classList.add('hidden');
+        if (btn) btn.querySelector('.card-chevron').textContent = '▼';
+      }
     }
 
     // Toggle set completion check

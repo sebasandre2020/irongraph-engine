@@ -79,6 +79,15 @@ def test_adapt_text_routine_with_drawbacks(client):
     assert pulldown_comp["load_delta_percent"] is not None
     assert pulldown_comp["load_delta_percent"] < 0  # Reduced due to 5.0h sleep
 
+    # Check realistic transition buffer & structured decision details
+    assert data["transition_buffer_min"] >= 1
+    assert data["raw_exercise_time_min"] >= 1
+    assert pulldown_comp["decision_details"] is not None
+    assert len(pulldown_comp["decision_details"]["exercise_selection"]) > 15
+    assert len(pulldown_comp["decision_details"]["rest_period"]) > 15
+    assert len(pulldown_comp["decision_details"]["volume_and_sets"]) > 15
+    assert len(pulldown_comp["decision_details"]["load_and_intensity"]) > 15
+
 
 def test_smart_plate_rounding_and_station_pairing(client):
     """Verify smart gym load increments and same_station_only constraint."""

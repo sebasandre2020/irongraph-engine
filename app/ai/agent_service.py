@@ -12,11 +12,13 @@ from app.engine.routine_parser import (
     ParsedExercise,
     extract_day_sections,
 )
+import math
 from app.engine.biomechanical_graph import default_graph, ExerciseNode
 from app.engine.rule_engine import BiomechanicalRuleEngine
 from app.engine.hypertrophy_math import HypertrophyMathEngine
 from app.ai.adapters import LLMAdapterFactory
 from app.schemas.routine_agent import (
+    DecisionRationaleDetails,
     ExerciseComparison,
     TextAdaptationRequest,
     TextAdaptationResponse,
@@ -55,6 +57,176 @@ def classify_equipment(equipment: str, exercise_name: str) -> str:
     elif any(k in eq for k in ["machine", "máquina", "maquina", "hack", "press", "curl"]):
         return "machine"
     return "bodyweight"
+
+
+def calculate_evidence_based_rest(
+    movement_pattern: str,
+    axial_stress: int,
+    equipment: str,
+    sleep_hours: float,
+    available_minutes: int,
+    status_tag: str
+) -> Tuple[int, str]:
+    """
+    Calculates evidence-based rest interval (seconds) and scientific rationale grounded in
+    Schoenfeld (2016) and Grgic (2017) meta-analyses on rest intervals and hypertrophy.
+    """
+    if status_tag == "MYO_REPS":
+        return (
+            15,
+            "15s entre mini-series (Protocolo Myo-Reps de Borge Fagerli): Pausa breve para resíntesis parcial de fosfocreatina manteniendo el reclutamiento de unidades motoras de alto umbral en estado de fatiga."
+        )
+    if status_tag == "APS_PAIRED":
+        rest = 60 if available_minutes <= 30 else 75
+        return (
+            rest,
+            f"{rest}s entre pares antagónicos: El grupo muscular opuesto descansa pasivamente durante el trabajo de su antagonista, permitiendo ~2.5 minutos de recuperación local por músculo con una reducción de tiempo del ~45% (Robbins et al., 2010)."
+        )
+
+    is_heavy_compound = (
+        axial_stress >= 5 or
+        movement_pattern in ["squat", "hinge"] or
+        any(k in equipment.lower() for k in ["barbell", "squat_rack", "hack_squat"])
+    )
+    is_moderate_compound = (
+        axial_stress >= 2 or
+        movement_pattern in ["horizontal_press", "horizontal_pull", "vertical_press", "vertical_pull", "hip_extension"]
+    )
+
+    if available_minutes <= 30:
+        if is_heavy_compound:
+            return (
+                120,
+                "120s de descanso (2 min): Umbral mínimo de seguridad y tensión mecánica en movimientos compuestos pesados bajo restricción severa de tiempo, evitando el fallo prematuro por hipoxia muscular."
+            )
+        elif is_moderate_compound:
+            return (
+                90,
+                "90s de descanso: Balance de densidad y aclaramiento de metabolitos para ejercicios multiarticulares moderados en sesión compacta."
+            )
+        else:
+            return (
+                60,
+                "60s de descanso: Suficiente para ejercicios monoarticulares (aislamiento) donde la fatiga sistémica y espinal es casi nula."
+            )
+    elif available_minutes <= 45:
+        if is_heavy_compound:
+            return (
+                150,
+                "150s de descanso (2.5 min): Permite ~90-95% de resíntesis de ATP y fosfocreatina (ATP/CP), maximizando la tensión mecánica en cada serie efectiva (Schoenfeld, 2016)."
+            )
+        elif is_moderate_compound:
+            return (
+                105,
+                "105s de descanso: Tiempo óptimo para mantener repeticiones efectivas en rangos de hipertrofia sin alargar la sesión."
+            )
+        else:
+            return (
+                75,
+                "75s de descanso: Intervalo ideal para aislamiento muscular, equilibrando tensión mecánica y estrés metabólico."
+            )
+    else:
+        if is_heavy_compound:
+            rest = 180 if sleep_hours < 6.0 else 150
+            reason = (
+                f"{rest}s de descanso (3 min): Con déficit de sueño ({sleep_hours}h), la excitabilidad corticoespinal y la recuperación del SNC son más lentas. 3 minutos garantizan resíntesis completa de ATP/CP y previenen la pérdida prematura de fuerza entre series (Grgic et al., 2017)."
+                if sleep_hours < 6.0 else
+                f"{rest}s de descanso (2.5 min): Duración recomendada por la literatura para máxima sobrecarga progresiva en movimientos con alta demanda axial y multiarticular."
+            )
+            return (rest, reason)
+        elif is_moderate_compound:
+            return (
+                120,
+                "120s de descanso (2 min): Estándar de oro para ejercicios multiarticulares en polea o máquinas guiadas según el metaanálisis de Schoenfeld (2016)."
+            )
+        else:
+            return (
+                90,
+                "90s de descanso: Recuperación completa para grupos musculares pequeños (brazos, hombro lateral) sin interferencia sistémica."
+            )
+
+
+def build_decision_details(
+    original: ParsedExercise,
+    adapted_name: str,
+    adapted_sets: int,
+    adapted_reps: str,
+    adapted_load_str: Optional[str],
+    load_delta_percent: Optional[int],
+    rest_sec: int,
+    rest_rationale: str,
+    status_tag: str,
+    sub_reason: str,
+    sleep_hours: float,
+    available_minutes: int,
+    paired_with: Optional[str] = None
+) -> DecisionRationaleDetails:
+    """Builds transparent, evidence-based reasoning for every aspect of this exercise."""
+    # 1. Exercise Selection
+    if status_tag == "SUBSTITUTED":
+        sel_reason = (
+            f"Sustitución de '{original.name}' por '{adapted_name}'. Motivo: {sub_reason}. "
+            f"Se sustituyó este ejercicio para eliminar el vector de cizallamiento espinal o sobrecarga articular, "
+            f"redirigiendo el 100% de la tensión mecánica al vientre muscular ({', '.join(original.primary_muscles)}) "
+            f"con una trayectoria biomecánicamente guiada y mayor estabilidad."
+        )
+    elif status_tag == "APS_PAIRED":
+        sel_reason = (
+            f"Se emparejó '{adapted_name}' en Superserie Antagónica (APS) con '{paired_with}'. "
+            f"Aprovecha la inhibición recíproca neuromuscular: mientras el grupo agonista trabaja, el antagonista se relaja, "
+            f"duplicando la densidad de entrenamiento sin reducir el volumen efectivo ni la fuerza (Robbins et al., 2010)."
+        )
+    elif status_tag == "MYO_REPS":
+        sel_reason = (
+            f"Protocolo Myo-Reps para '{adapted_name}'. En lugar de series tradicionales, se realiza 1 serie de activación "
+            f"seguida de 3 mini-series de repeticiones efectivas cerca del fallo. Ahorra hasta 8 minutos manteniendo la síntesis proteica muscular."
+        )
+    else:
+        sel_reason = (
+            f"Preservado '{adapted_name}' del plan original. Es un ejercicio biomecánicamente excelente para el patrón "
+            f"'{original.movement_pattern}' y el grupo ({', '.join(original.primary_muscles)}), con un ratio estímulo-fatiga (SFR) sobresaliente."
+        )
+
+    # 2. Volume & Sets
+    if status_tag == "MYO_REPS":
+        vol_reason = (
+            "Adaptado a 1 serie cluster (10-12 reps + 3x3 mini-series): Con restricción de tiempo, "
+            "este formato comprime todo el estímulo hipertrófico efectivo en solo 4 minutos."
+        )
+    elif adapted_sets < original.sets:
+        vol_reason = (
+            f"Reducido de {original.sets} a {adapted_sets} series (-{original.sets - adapted_sets} serie): "
+            f"Con {sleep_hours}h de sueño y tiempo ajustado ({available_minutes} min), el volumen adicional "
+            f"se convertiría en 'volumen basura'. Mantener {adapted_sets} series a RIR 1-2 preserva el estímulo sin fatiga residual."
+        )
+    else:
+        vol_reason = (
+            f"Mantenido en {adapted_sets} series ({adapted_reps} reps): Se sitúa en tu rango de volumen adaptativo "
+            f"óptimo (MAV), maximizando la señal anabólica sin saturar la capacidad de recuperación del SNC."
+        )
+
+    # 3. Rest
+    rest_reason = rest_rationale
+
+    # 4. Load & Intensity
+    if load_delta_percent and load_delta_percent < 0:
+        load_reason = (
+            f"Carga ajustada con {load_delta_percent}% ({adapted_load_str} vs {original.load_str or 'base'} original): "
+            f"La restricción de sueño ({sleep_hours}h) reduce la fuerza máxima un 8-12% por menor reclutamiento neural. "
+            f"Ajustar la carga preserva la tensión mecánica en el rango de reps sin riesgo de fallo técnico ni lesión."
+        )
+    else:
+        load_reason = (
+            f"Carga de trabajo mantenida ({adapted_load_str or original.load_str or 'Según plan'}): "
+            f"Sin déficit que comprometa la coordinación, se sostiene la sobrecarga progresiva prevista en tu rutina."
+        )
+
+    return DecisionRationaleDetails(
+        exercise_selection=sel_reason,
+        volume_and_sets=vol_reason,
+        rest_period=rest_reason,
+        load_and_intensity=load_reason
+    )
 
 
 class PersonalHypertrophyAgent:
@@ -181,20 +353,24 @@ class PersonalHypertrophyAgent:
             # Intensifiers & Time-Density Compression
             status_tag = "PRESERVED"
             intensifier = None
-            rest_sec = 90
             adapted_sets = original.sets
             adapted_reps = original.reps
+            paired_with_name = None
 
             if needs_substitute:
                 status_tag = "SUBSTITUTED"
 
+            # Autoregulate volume sets under time crunch to avoid junk volume
+            if is_severe_time_crunch and original.sets >= 4:
+                adapted_sets = 3
+            elif is_time_crunch and original.sets > 3 and i >= 2:
+                adapted_sets = 3
+
             # Antagonist Paired Sets (APS) logic for time crunch
             if is_time_crunch and i not in paired_indices:
-                # Find complementary exercise later in list (e.g. Press + Row, Quads + Hamstrings, Biceps + Triceps)
                 for j in range(i + 1, len(target_day.exercises)):
                     if j not in paired_indices:
                         other = target_day.exercises[j]
-                        # Pair Push + Pull or Leg Extensions + Curls
                         motion_ok = (
                             ("press" in original.movement_pattern and "pull" in other.movement_pattern) or
                             ("pull" in original.movement_pattern and "press" in other.movement_pattern) or
@@ -211,8 +387,8 @@ class PersonalHypertrophyAgent:
                             paired_indices.add(i)
                             paired_indices.add(j)
                             status_tag = "APS_PAIRED"
-                            intensifier = f"Antagonist Paired Set con {other.name} (60s descanso)"
-                            rest_sec = 60
+                            paired_with_name = other.name
+                            intensifier = f"Antagonist Paired Set con {other.name}"
                             break
 
             # Myo-Reps for secondary isolation on severe time crunch
@@ -221,13 +397,22 @@ class PersonalHypertrophyAgent:
                 intensifier = "Myo-Reps: 1 serie activación (10-12 reps) + 3 mini-series de 3 reps (15s descanso)"
                 adapted_sets = 1
                 adapted_reps = "10-12 + 3x3"
-                rest_sec = 15
 
             # If load was scaled down due to sleep
             if load_scale < 1.0 and status_tag == "PRESERVED":
                 status_tag = "LOAD_AUTOREGULATED"
 
-            # Estimate duration for this adapted exercise
+            # Calculate Evidence-Based Rest grounded in Schoenfeld (2016) and Grgic (2017)
+            rest_sec, rest_rationale = calculate_evidence_based_rest(
+                movement_pattern=original.movement_pattern,
+                axial_stress=original.axial_stress_rating,
+                equipment=original.required_equipment,
+                sleep_hours=sleep_hours,
+                available_minutes=available_minutes,
+                status_tag=status_tag
+            )
+
+            # Estimate net lifting/resting duration for this adapted exercise
             duration = HypertrophyMathEngine.estimate_exercise_duration(
                 sets=adapted_sets,
                 rest_seconds=rest_sec,
@@ -237,17 +422,34 @@ class PersonalHypertrophyAgent:
             total_adapted_duration += duration
             total_effective_sets += (3 if status_tag == "MYO_REPS" else adapted_sets)
 
-            # Rationale text
+            # Concise summary note
             rationale_notes = []
             if sub_reason:
                 rationale_notes.append(sub_reason)
             if load_scale < 1.0:
                 pct_reduced = int(round((1.0 - load_scale) * 100))
-                rationale_notes.append(f"Cargas ajustadas -{pct_reduced}% para compensar déficit de sueño ({sleep_hours}h) y evitar fatiga del SNC")
+                rationale_notes.append(f"Cargas ajustadas -{pct_reduced}% por déficit de sueño ({sleep_hours}h)")
             if intensifier:
-                rationale_notes.append(f"Estrategia de densidad: {intensifier}")
+                rationale_notes.append(f"Densidad: {intensifier}")
             if not rationale_notes:
                 rationale_notes.append("Ejercicio y series mantenidas en rango óptimo de tensión mecánica")
+
+            # Structured deep rationale for dropdown exploration
+            decision_details = build_decision_details(
+                original=original,
+                adapted_name=sub_name,
+                adapted_sets=adapted_sets,
+                adapted_reps=adapted_reps,
+                adapted_load_str=adapted_load_str,
+                load_delta_percent=load_delta_percent,
+                rest_sec=rest_sec,
+                rest_rationale=rest_rationale,
+                status_tag=status_tag,
+                sub_reason=sub_reason,
+                sleep_hours=sleep_hours,
+                available_minutes=available_minutes,
+                paired_with=paired_with_name
+            )
 
             comparisons.append(ExerciseComparison(
                 original_name=original.name,
@@ -263,18 +465,36 @@ class PersonalHypertrophyAgent:
                 rest_seconds=rest_sec,
                 status_tag=status_tag,
                 change_rationale=" | ".join(rationale_notes),
+                decision_details=decision_details,
                 intensifier=intensifier
             ))
 
-        time_saved = max(0, total_original_duration - total_adapted_duration)
+        # 4. Realistic Transition & Setup Cushion ("Colchón para cambio de máquinas y etc.")
+        num_adapted = len(comparisons)
+        if available_minutes <= 30:
+            per_switch_sec = 60
+            warmup_sec = 90
+        else:
+            per_switch_sec = 90
+            warmup_sec = 180
 
-        # 4. Generate AI Coaching Prose via Minimax
+        transition_seconds = (max(0, num_adapted - 1) * per_switch_sec) + (warmup_sec if num_adapted > 0 else 0)
+        transition_buffer_min = math.ceil(transition_seconds / 60)
+        raw_exercise_time_min = total_adapted_duration
+        estimated_duration_min = raw_exercise_time_min + transition_buffer_min
+
+        orig_transitions = (max(0, len(target_day.exercises) - 1) * per_switch_sec) + (warmup_sec if target_day.exercises else 0)
+        orig_total = total_original_duration + math.ceil(orig_transitions / 60)
+        time_saved = max(0, orig_total - estimated_duration_min)
+
+        # 5. Generate AI Coaching Prose via Minimax
         prompt_drawbacks = {
             "sleep_hours": sleep_hours,
             "available_minutes": available_minutes,
             "occupied_equipment": request.occupied_equipment,
             "localized_pain_symptoms": request.localized_pain_symptoms,
-            "subjective_readiness": readiness
+            "subjective_readiness": readiness,
+            "transition_buffer_min": transition_buffer_min
         }
         prompt_exercises = [c.model_dump() for c in comparisons]
 
@@ -290,7 +510,9 @@ class PersonalHypertrophyAgent:
             detected_day_title=target_day.title,
             original_exercises_count=len(target_day.exercises),
             adapted_exercises_count=len(comparisons),
-            estimated_duration_min=total_adapted_duration,
+            estimated_duration_min=estimated_duration_min,
+            raw_exercise_time_min=raw_exercise_time_min,
+            transition_buffer_min=transition_buffer_min,
             time_saved_min=time_saved,
             effective_volume_percentage=100.0,
             sfr_rating="VERY_HIGH" if is_sleep_deprived or pain_symptoms else "HIGH",

@@ -7,6 +7,14 @@ from pydantic import BaseModel, Field
 from app.schemas.adaptation import DailyDrawbacks, AdaptedExerciseSet, AdaptedWorkout
 
 
+class DecisionRationaleDetails(BaseModel):
+    """Deep scientific rationale explaining every modification made to an exercise."""
+    exercise_selection: str = Field(..., description="Biomechanical reason for choosing, keeping, or substituting this exercise")
+    volume_and_sets: str = Field(..., description="Scientific reason for keeping or modifying number of sets/reps")
+    rest_period: str = Field(..., description="Evidence-based rationale for the specific rest interval (ATP/CP, CNS, SFR)")
+    load_and_intensity: str = Field(..., description="Reasoning behind load autoregulation and RIR/proximity to failure")
+
+
 class ExerciseComparison(BaseModel):
     """Side-by-side comparison between original and adapted exercise."""
     original_name: str
@@ -22,6 +30,7 @@ class ExerciseComparison(BaseModel):
     rest_seconds: int = 90
     status_tag: str = Field(..., description="E.g. PRESERVED, SUBSTITUTED, APS_PAIRED, LOAD_SCALED, MYO_REPS")
     change_rationale: str
+    decision_details: Optional[DecisionRationaleDetails] = None
     intensifier: Optional[str] = None
 
 
@@ -46,6 +55,8 @@ class TextAdaptationResponse(BaseModel):
     original_exercises_count: int
     adapted_exercises_count: int
     estimated_duration_min: int
+    raw_exercise_time_min: int = 0
+    transition_buffer_min: int = 0
     time_saved_min: int
     effective_volume_percentage: float = 100.0
     sfr_rating: str = "VERY_HIGH"
